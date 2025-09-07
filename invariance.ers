@@ -1,0 +1,12 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! ```
+use std::cell::Cell;
+
+fn convert<'a>(input: Cell<&'static str>) -> Cell<&'a str> {
+    input
+}
+fn main() {
+    println!("Hello rust script!");
+}

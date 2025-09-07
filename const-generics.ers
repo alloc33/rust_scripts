@@ -1,0 +1,23 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! ```
+
+struct Buffer<T, const LENGTH: usize> {
+    buf: [T; LENGTH],
+}
+
+impl<T, const LENGTH: usize> From<[T; LENGTH]> for Buffer<T, LENGTH> {
+    fn from(buf: [T; LENGTH]) -> Self {
+        Buffer { buf }
+    }
+}
+
+fn main() {
+    let buf: Buffer<i32, 5> = Buffer::from([1, 2, 3, 4, 5]);
+    println!(
+        "Buffer created with length {}: {:?}",
+        buf.buf.len(),
+        buf.buf
+    )
+}

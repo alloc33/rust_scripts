@@ -1,0 +1,232 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! ```
+
+use std::collections::HashMap;
+
+/// A simple in-memory key-value store
+#[derive(Debug)]
+pub struct KVStore {
+    store: HashMap<String, String>,
+}
+
+impl KVStore {
+    /// Creates a new empty KVStore
+    pub fn new() -> Self {
+        KVStore {
+            store: HashMap::new(),
+        }
+    }
+
+    /// Sets a key-value pair in the store
+    /// If the key already exists, its value will be updated
+    pub fn set(&mut self, key: &str, value: &str) {
+        self.store.insert(key.to_string(), value.to_string());
+    }
+
+    /// Gets the value associated with a key
+    /// Returns Some(value) if the key exists, None otherwise
+    pub fn get(&self, key: &str) -> Option<&str> {
+        self.store.get(key).map(|s| s.as_str())
+    }
+
+    /// Deletes a key from the store
+    /// Returns true if the key was deleted, false if it didn't exist
+    pub fn delete(&mut self, key: &str) -> bool {
+        self.store.remove(key).is_some()
+    }
+
+    /// Counts the number of keys that have the given value
+    /// Time complexity: O(n) where n is the number of entries
+    pub fn count(&self, value: &str) -> usize {
+        self.store
+            .values()
+            .filter(|v| v.as_str() == value)
+            .count()
+    }
+}
+
+// NOTE: In a real interview, I would discuss these potential enhancements:
+// 
+// 1. Generic Implementation:
+//    - Make KVStore generic over K: Hash + Eq, V: PartialEq
+//    - Allows reuse with any hashable key type and comparable value type
+//
+// 2. Performance Optimization for COUNT:
+//    - Current: O(n) for each count operation
+//    - Optimized: Maintain a reverse index HashMap<V, HashSet<K>>
+//    - Trade-off: More memory, but O(1) count operations
+//
+// 3. Thread Safety:
+//    - Current implementation is not thread-safe
+//    - Could wrap in Arc<Mutex<>> or use DashMap for concurrent access
+//
+// 4. Additional Operations:
+//    - exists(key) -> bool
+//    - values() -> iterator over values
+//    - keys() -> iterator over keys
+//    - clear() -> remove all entries
+
+fn main() {
+    // Create a new store
+    let mut store = KVStore::new();
+
+    // Demonstrate the required operations
+    println!("=== KVStore Demo ===\n");
+    
+    // SET operations
+    store.set("a", "foo");
+    store.set("b", "foo");
+    store.set("c", "bar");
+    println!("Set: a='foo', b='foo', c='bar'");
+
+    // GET operations
+    println!("\nGET operations:");
+    println!("  get('a') = {:?}", store.get("a"));
+    println!("  get('b') = {:?}", store.get("b"));
+    println!("  get('c') = {:?}", store.get("c"));
+    println!("  get('nonexistent') = {:?}", store.get("nonexistent"));
+
+    // COUNT operations
+    println!("\nCOUNT operations:");
+    println!("  count('foo') = {}", store.count("foo"));
+    println!("  count('bar') = {}", store.count("bar"));
+    println!("  count('nonexistent') = {}", store.count("nonexistent"));
+
+    // DELETE operation
+    println!("\nDELETE operations:");
+    let deleted = store.delete("a");
+    println!("  delete('a') returned: {}", deleted);
+    println!("  get('a') after delete = {:?}", store.get("a"));
+    println!("  count('foo') after delete = {}", store.count("foo"));
+    
+    // Delete non-existent key
+    let deleted = store.delete("nonexistent");
+    println!("  delete('nonexistent') returned: {}", deleted);
+
+    // Update existing key
+    println!("\nUPDATE operation:");
+    store.set("b", "updated");
+    println!("  set('b', 'updated')");
+    println!("  get('b') = {:?}", store.get("b"));
+    println!("  count('foo') = {}", store.count("foo"));
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_example_from_requirements() {
+        let mut store = KVStore::new();
+
+        store.set("a", "foo");
+        store.set("b", "foo");
+        store.set("c", "bar");
+
+        assert_eq!(store.get("a"), Some("foo"));
+        assert_eq!(store.count("foo"), 2);
+        assert_eq!(store.count("bar"), 1);
+
+        store.delete("a");
+        assert_eq!(store.get("a"), None);
+        assert_eq!(store.count("foo"), 1);
+    }
+
+    #[test]
+    fn test_get_nonexistent_key() {
+        let store = KVStore::new();
+        assert_eq!(store.get("nonexistent"), None);
+    }
+
+    #[test]
+    fn test_delete_nonexistent_key() {
+        let mut store = KVStore::new();
+        assert_eq!(store.delete("nonexistent"), false);
+    }
+
+    #[test]
+    fn test_count_nonexistent_value() {
+        let store = KVStore::new();
+        assert_eq!(store.count("nonexistent"), 0);
+    }
+
+    #[test]
+    fn test_update_existing_key() {
+        let mut store = KVStore::new();
+        
+        store.set("key", "value1");
+        assert_eq!(store.get("key"), Some("value1"));
+        
+        store.set("key", "value2");
+        assert_eq!(store.get("key"), Some("value2"));
+        assert_eq!(store.count("value1"), 0);
+        assert_eq!(store.count("value2"), 1);
+    }
+
+    #[test]
+    fn test_empty_store() {
+        let store = KVStore::new();
+        assert_eq!(store.get("any"), None);
+        assert_eq!(store.count("any"), 0);
+    }
+
+    #[test]
+    fn test_multiple_deletes() {
+        let mut store = KVStore::new();
+        store.set("key", "value");
+        
+        assert_eq!(store.delete("key"), true);
+        assert_eq!(store.delete("key"), false); // Second delete returns false
+    }
+}
+
+// Alternative optimized implementation with O(1) count operation
+// (I would mention this but not implement unless asked)
+#[allow(dead_code)]
+mod optimized {
+    use std::collections::{HashMap, HashSet};
+
+    pub struct OptimizedKVStore {
+        store: HashMap<String, String>,
+        value_index: HashMap<String, HashSet<String>>, // value -> set of keys
+    }
+
+    impl OptimizedKVStore {
+        pub fn new() -> Self {
+            OptimizedKVStore {
+                store: HashMap::new(),
+                value_index: HashMap::new(),
+            }
+        }
+
+        pub fn set(&mut self, key: &str, value: &str) {
+            // Remove old value from index if key exists
+            if let Some(old_value) = self.store.get(key) {
+                if let Some(keys) = self.value_index.get_mut(old_value) {
+                    keys.remove(key);
+                    if keys.is_empty() {
+                        self.value_index.remove(old_value);
+                    }
+                }
+            }
+
+            // Insert new value
+            self.store.insert(key.to_string(), value.to_string());
+            self.value_index
+                .entry(value.to_string())
+                .or_insert_with(HashSet::new)
+                .insert(key.to_string());
+        }
+
+        pub fn count(&self, value: &str) -> usize {
+            self.value_index
+                .get(value)
+                .map(|keys| keys.len())
+                .unwrap_or(0)
+        }
+
+        // ... other methods similar to basic implementation
+    }
+}
