@@ -10,7 +10,10 @@ const SSIZE: isize = 48;
 #[derive(Debug, Default)]
 #[repr(C)]
 struct ThreadContext {
+    #[cfg(target_arch = "x86_64")]
     rsp: u64,
+    #[cfg(target_arch = "aarch64")]
+    sp: u64,
 }
 
 fn hello() -> ! {
@@ -18,11 +21,23 @@ fn hello() -> ! {
     loop {}
 }
 
+#[cfg(target_arch = "x86_64")]
 unsafe fn gt_switch(new: *const ThreadContext) {
     asm!(
         "mov rsp, [{0} + 0x00]",
         "ret",
         in(reg) new,
+    );
+}
+
+#[cfg(target_arch = "aarch64")]
+unsafe fn gt_switch(new: *const ThreadContext) {
+    asm!(
+        "ldr x9, [{0}]",
+        "mov sp, x9",
+        "ret",
+        in(reg) new,
+        clobber_abi("C"),
     );
 }
 
@@ -34,7 +49,15 @@ fn main() {
         let stack_bottom = stack.as_mut_ptr().offset(SSIZE);
         let sb_aligned = (stack_bottom as usize & !15) as *mut u8;
         std::ptr::write(sb_aligned.offset(-16) as *mut u64, hello as u64);
-        ctx.rsp = sb_aligned.offset(-16) as u64;
+        
+        #[cfg(target_arch = "x86_64")]
+        {
+            ctx.rsp = sb_aligned.offset(-16) as u64;
+        }
+        #[cfg(target_arch = "aarch64")]
+        {
+            ctx.sp = sb_aligned.offset(-16) as u64;
+        }
 
         // Show stack
         for i in 0..SSIZE {
