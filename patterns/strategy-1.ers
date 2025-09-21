@@ -1,0 +1,91 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! ```
+
+// STRATEGY PATTERN: Abstract Strategy Interface
+trait Handler {
+    type Input; // Associated type for strategy's input
+    type Output; // Associated type for strategy's output
+
+    fn handle(&self, input: Self::Input) -> Self::Output;
+}
+
+// STRATEGY PATTERN: First layer - specific operation types
+enum MathOp {
+    Add(i32, i32),
+    Multiply(i32, i32),
+}
+
+enum StringOp {
+    Concat(String, String),
+    Uppercase(String),
+}
+
+// STRATEGY PATTERN: Second layer - aggregates different operation types
+enum Operation {
+    Math(MathOp),
+    Text(StringOp),
+}
+
+// STRATEGY PATTERN: Concrete Strategy #1 - Math Handler
+struct MathHandler;
+
+impl Handler for MathHandler {
+    type Input = MathOp; // This strategy works with MathOp
+    type Output = i32; // And produces integers
+
+    fn handle(&self, input: Self::Input) -> Self::Output {
+        match input {
+            MathOp::Add(a, b) => a + b,
+            MathOp::Multiply(a, b) => a * b,
+        }
+    }
+}
+
+// STRATEGY PATTERN: Concrete Strategy #2 - String Handler
+struct StringHandler;
+
+impl Handler for StringHandler {
+    type Input = StringOp; // This strategy works with StringOp
+    type Output = String; // And produces strings
+
+    fn handle(&self, input: Self::Input) -> Self::Output {
+        match input {
+            StringOp::Concat(a, b) => format!("{}{}", a, b),
+            StringOp::Uppercase(s) => s.to_uppercase(),
+        }
+    }
+}
+
+// STRATEGY PATTERN: Context/Router that selects appropriate strategy
+struct Processor;
+
+impl Processor {
+    // STRATEGY PATTERN: Strategy selection based on operation type
+    fn process(&self, op: Operation) -> String {
+        match op {
+            Operation::Math(math_op) => {
+                // Delegate to math strategy
+                let result = MathHandler.handle(math_op);
+                format!("Result: {}", result)
+            }
+            Operation::Text(string_op) => {
+                // Delegate to string strategy
+                let result = StringHandler.handle(string_op);
+                format!("Result: {}", result)
+            }
+        }
+    }
+}
+
+fn main() {
+    let processor = Processor;
+
+    // Using different strategies through the same interface
+    let op1 = Operation::Math(MathOp::Add(5, 3));
+    let op2 = Operation::Text(StringOp::Uppercase("hello".to_string()));
+
+    println!("{}", processor.process(op1)); // "Result: 8"
+    println!("{}", processor.process(op2)); // "Result: HELLO"
+}

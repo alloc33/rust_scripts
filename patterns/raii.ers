@@ -1,0 +1,101 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! ```
+
+use std::cell::UnsafeCell;
+use std::ops::{Deref, DerefMut};
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::Ordering::{Acquire, Release};
+
+pub struct SpinLock<T> {
+    locked: AtomicBool,
+    value: UnsafeCell<T>,
+}
+
+// RAII Pattern: SpinLock owns the resource (T) and controls all access to it
+unsafe impl<T> Sync for SpinLock<T> where T: Send {}
+
+pub struct Guard<'a, T> {
+    lock: &'a SpinLock<T>,
+}
+
+// Guard can be shared across threads if T is Sync
+unsafe impl<T> Sync for Guard<'_, T> where T: Sync {}
+
+impl<T> SpinLock<T> {
+    pub const fn new(value: T) -> Self {
+        Self {
+            locked: AtomicBool::new(false),
+            value: UnsafeCell::new(value),
+        }
+    }
+
+    // RAII Acquisition: lock() acquires the resource and returns a Guard
+    // The Guard's mere existence proves we hold the lock
+    pub fn lock(&self) -> Guard<T> {
+        // Spin until we acquire the lock atomically
+        while self.locked.swap(true, Acquire) {
+            std::hint::spin_loop();
+        }
+        // Resource is now acquired - return the guard that represents ownership
+        Guard { lock: self }
+    }
+}
+
+// RAII Access Control: Deref allows transparent access to T through the Guard
+// The type system ensures you can't access T without going through Guard
+impl<T> Deref for Guard<'_, T> {
+    type Target = T;
+    fn deref(&self) -> &T {
+        // Safety: The very existence of this Guard
+        // guarantees we've exclusively locked the lock.
+        // This is RAII's guarantee: if you have a Guard, you have exclusive access
+        unsafe { &*self.lock.value.get() }
+    }
+}
+
+impl<T> DerefMut for Guard<'_, T> {
+    fn deref_mut(&mut self) -> &mut T {
+        // Safety: The very existence of this Guard
+        // guarantees we've exclusively locked the lock.
+        // Mutable access is also mediated by the Guard
+        unsafe { &mut *self.lock.value.get() }
+    }
+}
+
+// RAII Release: Drop automatically releases the resource when Guard goes out of scope
+// This is the "finalisation in destructor" part - happens automatically, can't be forgotten
+impl<T> Drop for Guard<'_, T> {
+    fn drop(&mut self) {
+        // Release the lock atomically
+        // This ALWAYS happens when the Guard is dropped - no manual unlock needed
+        self.lock.locked.store(false, Release);
+    }
+}
+
+fn main() {
+    use std::thread;
+
+    // Create a SpinLock protecting a Vec
+    let x = SpinLock::new(Vec::new());
+
+    thread::scope(|s| {
+        // RAII in action: lock() returns a Guard, push() happens through it,
+        // lock is automatically released when the Guard drops at end of scope
+        s.spawn(|| x.lock().push(1));
+
+        s.spawn(|| {
+            let mut g = x.lock(); // Acquire lock via Guard
+            g.push(2); // Access protected data through Guard
+            g.push(2);
+            // Lock automatically released here when g drops
+        });
+    });
+
+    let g = x.lock();
+    // The borrow checker ensures we can't keep references to the Vec
+    // that outlive the Guard - this is Rust extending RAII with compile-time safety
+    assert!(g.as_slice() == [1, 2, 2] || g.as_slice() == [2, 2, 1]);
+    // Lock released when g drops
+}
