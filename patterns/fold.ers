@@ -1,0 +1,43 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! ```
+
+// Classic Fold pattern - reducing a collection to a single value
+
+// Generic fold function showing the pattern clearly
+fn fold<T, A>(items: Vec<T>, init: A, f: impl Fn(A, T) -> A) -> A {
+    let mut accumulator = init;
+    for item in items {
+        accumulator = f(accumulator, item);
+    }
+    accumulator
+}
+
+fn main() {
+    // Example 1: Sum numbers
+    let numbers = vec![1, 2, 3, 4, 5];
+    let sum = fold(numbers, 0, |acc, x| acc + x);
+    println!("Sum: {}", sum); // 15
+
+    // Example 2: Build a string
+    let words = vec!["Hello", "World", "from", "Rust"];
+    let sentence = fold(words, String::new(), |mut acc, word| {
+        if !acc.is_empty() {
+            acc.push(' ');
+        }
+        acc.push_str(word);
+        acc
+    });
+    println!("Sentence: {}", sentence); // "Hello World from Rust"
+
+    // Example 3: Find maximum
+    let values = vec![3, 7, 2, 9, 1];
+    let max = fold(values, i32::MIN, |acc, x| acc.max(x));
+    println!("Max: {}", max); // 9
+
+    // Example 4: Count specific items
+    let items = vec!['a', 'b', 'a', 'c', 'a'];
+    let count_a = fold(items, 0, |acc, x| if x == 'a' { acc + 1 } else { acc });
+    println!("Count of 'a': {}", count_a); // 3
+}
