@@ -1,0 +1,49 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! ```
+
+// Version 1: Using fold to build reversed string
+fn reverse_string_1(s: &str) -> String {
+    // Convert string to characters and enumerate to get indices
+    s.chars()
+        .enumerate()
+        // Create a vector with placeholder chars, same length as input
+        .fold(vec![' '; s.chars().count()], |mut acc, (i, c)| {
+            // Place each character at its reversed position
+            // If char is at index i, put it at (length - 1 - i)
+            acc[s.chars().count() - 1 - i] = c;
+            acc
+        })
+        // Convert the vector of chars back into an iterator
+        .into_iter()
+        // Collect the chars into a String
+        .collect()
+}
+
+// Version 2: Two-pointer swap approach (most efficient)
+fn reverse_string_2(s: &str) -> String {
+    // Convert the string into a vector of characters
+    // This gives us mutable access to swap elements
+    let mut chars: Vec<char> = s.chars().collect();
+    let len = chars.len();
+    
+    // Iterate only through the first half of the string
+    for i in 0..len / 2 {
+        // Swap character at position i with its mirror position
+        // i=0 swaps with len-1, i=1 swaps with len-2, etc.
+        chars.swap(i, len - 1 - i);
+    }
+    
+    // Convert the vector of chars back into a String
+    chars.into_iter().collect()
+}
+
+// Example usage:
+fn main() {
+    let original = "hello world";
+    let reversed1 = reverse_string_1(original);
+    let reversed2 = reverse_string_2(original);
+    println!("{} -> {}", original, reversed1); // hello world -> dlrow olleh
+    println!("{} -> {}", original, reversed2); // hello world -> dlrow olleh
+}
