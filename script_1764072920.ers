@@ -1,0 +1,36 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! rand = "0.9"
+//! ```
+
+// Implement a collection such that you can insert a key/value pair in O(1), delete some value (by giving the key) in O(1), and ask for a pseudo-random value from the collection in O(1). You may use a library to generate a random number.
+
+use std::{collections::HashMap, hash::Hash};
+
+fn main() {
+    let rand = rand::random::<u8>();
+    let mut map = std::collections::HashMap::new();
+
+    let some_key = "some_key";
+    map.insert(some_key, rand);
+    let val = map.get(&some_key);
+}
+
+struct KVSTore<K: Eq, V> {
+    keys: Vec<K>,
+    store: HashMap<K, V>
+}
+
+impl<K: Eq + Hash + Clone, V> KVSTore<K, V> {
+    pub fn insert(&mut self, key: K, value: V) {
+        // self.keys.push(key);
+        // if self.keys.
+        self.store.insert(key, value);
+    }
+
+    // pub fn get_random(&mut self) -> Option<V> {
+    //     let rand = rand::random::<u8>();
+    //     self.store.get(K)
+    // }
+}

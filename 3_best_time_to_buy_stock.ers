@@ -1,0 +1,29 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! ```
+
+// **Problem:** Given an array of stock prices where `prices[i]` is the price on day `i`, find the maximum profit from buying on one day and selling on a future day. Return 0 if no profit is possible.
+
+use std::i32;
+
+fn maximum_profit(prices: Vec<i32>) -> i32 {
+    let mut min_price = i32::MAX;
+    let mut max_profit = 0;
+
+    for price in prices {
+        min_price = min_price.min(price);
+
+        max_profit = max_profit.max(price - min_price);
+    }
+
+    max_profit 
+}
+
+fn main() {
+    let prices = [5, 8, 3, 1, 14, 7, 22, 9, 5, 3];
+    let prices1 = [7, 6, 4, 3];
+
+    dbg!(maximum_profit(prices.to_vec()));
+    dbg!(maximum_profit(prices1.to_vec()));
+}

@@ -1,0 +1,13 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! ```
+fn main() {
+    let s = "some string aaa";
+    // Most elegant.
+    let count = s.chars().filter(|&c| c == 'a').count();
+    // Alternative if you need multiple characters:
+    let count1 = s.matches("aa").count();
+
+    dbg!(count, count1);
+}

@@ -1,0 +1,114 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! ```
+
+// Implement a collection such that you can insert a key/value pair in O(1), delete some value (by giving the key) in O(1), and ask for a pseudo-random value from the collection in O(1). You may use a library to generate a random number.
+
+use std::borrow::Borrow;
+use std::collections::HashMap;
+use std::hash::Hash;
+
+struct RandomMap<K, V> {
+    map: HashMap<K, (V, usize)>, // key -> (value, index in keys vec)
+    keys: Vec<K>,                // index -> key
+}
+
+impl<K, V> RandomMap<K, V>
+where
+    K: Eq + Hash + Clone,
+{
+    pub fn new() -> Self {
+        RandomMap {
+            map: HashMap::new(),
+            keys: Vec::new(),
+        }
+    }
+
+    /// Insert a key/value pair. Returns the old value if key existed.
+    /// Time: O(1)
+    pub fn insert(&mut self, key: K, value: V) -> Option<V> {
+        if let Some((old_value, _)) = self.map.get_mut(&key) {
+            // Key exists, just update the value
+            return Some(std::mem::replace(old_value, value));
+        }
+
+        // New key - add to both structures
+        let idx = self.keys.len();
+        self.keys.push(key.clone());
+        self.map.insert(key, (value, idx));
+        None
+    }
+
+    /// Remove a key/value pair by key. Returns the removed value.
+    /// Time: O(1)
+    pub fn remove<Q>(&mut self, key: &Q) -> Option<V>
+    where
+        K: Borrow<Q>,
+        Q: Hash + Eq + ?Sized,
+    {
+        let (old_value, old_idx) = self.map.remove(key)?;
+
+        // Swap with last element and pop (to maintain O(1))
+        let last_idx = self.keys.len() - 1;
+
+        if old_idx != last_idx {
+            // Swap the removed key's position with the last key
+            self.keys.swap(old_idx, last_idx);
+            // Update the index of the swapped key in the map
+            // We need to update the index for the key that was moved from last_idx to old_idx
+            self.map.entry(self.keys[old_idx].clone()).and_modify(|e| {
+                e.1 = old_idx;
+            });
+        }
+
+        self.keys.pop();
+        Some(old_value)
+    }
+
+    /// Get a random value from the collection.
+    /// Time: O(1)
+    pub fn get_random(&self) -> Option<&V> {
+        if self.keys.is_empty() {
+            return None;
+        }
+
+        // Using a simple method without external rand crate
+        use std::collections::hash_map::RandomState;
+        use std::hash::{BuildHasher, Hasher};
+
+        let random_state = RandomState::new();
+        let mut hasher = random_state.build_hasher();
+        hasher.write_usize(self.keys.len());
+        let rand_idx = (hasher.finish() as usize) % self.keys.len();
+
+        let key = &self.keys[rand_idx];
+        self.map.get(key).map(|(v, _)| v)
+    }
+
+    /// Get the number of elements
+    pub fn len(&self) -> usize {
+        self.keys.len()
+    }
+
+    /// Check if the collection is empty
+    pub fn is_empty(&self) -> bool {
+        self.keys.is_empty()
+    }
+}
+
+// Example usage:
+fn main() {
+    let mut map = RandomMap::new();
+
+    map.insert("a", 1);
+    map.insert("b", 2);
+    map.insert("c", 3);
+
+    println!("Random value: {:?}", map.get_random());
+
+    map.remove(&"b");
+
+    println!("After removing 'b', random value: {:?}", map.get_random());
+    println!("Length: {}", map.len());
+}

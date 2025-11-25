@@ -1,0 +1,26 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! ```
+
+// Given two strings s and t, return true if t is an anagram of s, and false otherwise.
+
+fn is_anagram(s: String, t: String) -> bool {
+    let mut first: Vec<char> = s.chars().collect();
+    let mut second: Vec<char> = t.chars().collect();
+    first.sort();
+    second.sort();
+
+    first == second
+}
+
+fn main() {
+    let string1 = "helloworld";
+    let string2 = "loworldhel";
+
+    let string3 = "dog";
+    let string4 = "cat";
+
+    dbg!(is_anagram(string1.to_string(), string2.to_string()));
+    dbg!(is_anagram(string3.to_string(), string4.to_string()));
+}
