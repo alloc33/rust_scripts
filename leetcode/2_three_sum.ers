@@ -1,0 +1,76 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! ```
+
+// Given an integer array nums, return all the triplets [nums[i], nums[j], nums[k]] such that i != j, i != k, and j != k, and nums[i] + nums[j] + nums[k] == 0.
+// Notice that the solution set must not contain duplicate triplets.
+
+use std::cmp::Ordering;
+
+pub fn three_sum(mut nums: Vec<i32>) -> Vec<Vec<i32>> {
+    // Sort array to enable two-pointer technique
+    // Time: O(n log n)
+    nums.sort_unstable();
+    let mut result = Vec::new();
+
+    // Fix first element, then find pairs that complete the triplet
+    for i in 0..nums.len() {
+        // Skip duplicate values for first element to avoid duplicate triplets
+        if i > 0 && nums[i] == nums[i - 1] {
+            continue;
+        }
+
+        // Optimization: if smallest number is positive, no way to sum to 0
+        if nums[i] > 0 {
+            break;
+        }
+
+        // Two pointers: left starts after i, right at end
+        let (mut l, mut r) = (i + 1, nums.len() - 1);
+
+        while l < r {
+            // Calculate sum of current triplet
+            match (nums[i] + nums[l] + nums[r]).cmp(&0) {
+                Ordering::Equal => {
+                    // Found a valid triplet
+                    result.push(vec![nums[i], nums[l], nums[r]]);
+
+                    // Skip duplicate values for left pointer
+                    while l < r && nums[l] == nums[l + 1] {
+                        l += 1;
+                    }
+
+                    // Skip duplicate values for right pointer
+                    while l < r && nums[r] == nums[r - 1] {
+                        r -= 1;
+                    }
+
+                    // Move both pointers inward
+                    l += 1;
+                    r -= 1;
+                }
+                // Sum too small, need larger number
+                Ordering::Less => l += 1,
+
+                // Sum too large, need smaller number
+                Ordering::Greater => r -= 1,
+            }
+        }
+    }
+
+    result
+}
+
+fn main() {
+    let result1 = three_sum(vec![-1, 0, 1, 2, -1, -4]);
+    assert_eq!(result1, vec![vec![-1, -1, 2], vec![-1, 0, 1]]);
+
+    let result2 = three_sum(vec![0, 1, 1]);
+    assert_eq!(result2, Vec::<Vec<i32>>::new());
+
+    let result3 = three_sum(vec![0, 0, 0]);
+    assert_eq!(result3, vec![vec![0, 0, 0]]);
+
+    println!("All tests passed!");
+}
