@@ -1,0 +1,62 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! ```
+
+pub fn insert(intervals: Vec<Vec<i32>>, new_interval: Vec<i32>) -> Vec<Vec<i32>> {
+    let mut result = Vec::new();
+    let mut new_interval = new_interval;
+    let mut i = 0;
+
+    // Step 1: Add all intervals that come BEFORE new_interval (no overlap)
+    while i < intervals.len() && intervals[i][1] < new_interval[0] {
+        result.push(intervals[i].clone());
+        i += 1;
+    }
+
+    // Step 2: Merge all intervals that OVERLAP with new_interval
+    while i < intervals.len() && intervals[i][0] <= new_interval[1] {
+        // Expand new_interval to cover all overlapping intervals
+        new_interval[0] = new_interval[0].min(intervals[i][0]);
+        new_interval[1] = new_interval[1].max(intervals[i][1]);
+        i += 1;
+    }
+
+    // Add the merged interval
+    result.push(new_interval);
+
+    // Step 3: Add all remaining intervals that come AFTER new_interval
+    while i < intervals.len() {
+        result.push(intervals[i].clone());
+        i += 1;
+    }
+
+    result
+}
+
+fn main() {
+    assert_eq!(
+        insert(vec![vec![1, 3], vec![6, 9]], vec![2, 5]),
+        vec![vec![1, 5], vec![6, 9]]
+    );
+
+    assert_eq!(
+        insert(
+            vec![
+                vec![1, 2],
+                vec![3, 5],
+                vec![6, 7],
+                vec![8, 10],
+                vec![12, 16]
+            ],
+            vec![4, 8]
+        ),
+        vec![vec![1, 2], vec![3, 10], vec![12, 16]]
+    );
+
+    assert_eq!(insert(vec![], vec![5, 7]), vec![vec![5, 7]]);
+
+    assert_eq!(insert(vec![vec![1, 5]], vec![2, 3]), vec![vec![1, 5]]);
+
+    println!("All tests passed!");
+}
