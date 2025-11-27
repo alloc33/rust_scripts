@@ -3,7 +3,11 @@
 //! [dependencies]
 //! ```
 
-pub fn merge(mut intervals: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
+// Given an array of intervals where intervals[i] = [starti, endi], merge all overlapping intervals, and return an array of the non-overlapping intervals that cover all the intervals in the input.
+
+pub fn merge(intervals: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
+    let mut intervals = intervals;
+
     // Sort intervals by start time
     // This allows us to process them in order and check only adjacent intervals
     intervals.sort_unstable_by_key(|interval| interval[0]);
