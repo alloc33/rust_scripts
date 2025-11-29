@@ -8,7 +8,8 @@
 
 use std::cmp::Ordering;
 
-pub fn three_sum(mut nums: Vec<i32>) -> Vec<Vec<i32>> {
+pub fn three_sum(nums: Vec<i32>) -> Vec<Vec<i32>> {
+    let mut nums = nums;
     // Sort array to enable two-pointer technique
     // Time: O(n log n)
     nums.sort_unstable();

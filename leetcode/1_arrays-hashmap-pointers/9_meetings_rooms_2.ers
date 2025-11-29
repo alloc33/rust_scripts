@@ -1,0 +1,89 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! ```
+
+// Given an array of meeting time intervals consisting of start and end times [[s1,e1],[s2,e2],...] (si < ei), find the minimum number of conference rooms required.
+
+// Note: (0,8),(8,10) is not considered a conflict at 8.
+
+use std::cmp::Reverse;
+use std::collections::BinaryHeap;
+
+#[derive(Debug, Clone)]
+pub struct Interval {
+    start: i32,
+    end: i32,
+}
+
+impl Interval {
+    fn new(start: i32, end: i32) -> Self {
+        Interval { start, end }
+    }
+}
+
+pub fn min_meeting_rooms(intervals: Vec<Interval>) -> i32 {
+    let mut intervals = intervals;
+    // Edge case: no meetings
+    if intervals.is_empty() {
+        return 0;
+    }
+
+    // Sort meetings by start time
+    intervals.sort_unstable_by_key(|interval| interval.start);
+
+    // Min heap to track end times of ongoing meetings
+    // Reverse wrapper makes BinaryHeap act as min heap
+    let mut heap: BinaryHeap<Reverse<i32>> = BinaryHeap::new();
+
+    // Add first meeting's end time
+    heap.push(Reverse(intervals[0].end));
+
+    // Process remaining meetings
+    for i in 1..intervals.len() {
+        // If earliest ending meeting finishes before current starts
+        // We can reuse that room (no conflict)
+        if let Some(&Reverse(earliest_end)) = heap.peek() {
+            if earliest_end <= intervals[i].start {
+                heap.pop();
+            }
+        }
+
+        // Add current meeting's end time
+        // (either reusing a room or needing a new one)
+        heap.push(Reverse(intervals[i].end));
+    }
+
+    // Heap size = number of rooms needed
+    heap.len() as i32
+}
+
+fn main() {
+    assert_eq!(
+        min_meeting_rooms(vec![
+            Interval::new(0, 30),
+            Interval::new(5, 10),
+            Interval::new(15, 20)
+        ]),
+        2
+    );
+
+    assert_eq!(
+        min_meeting_rooms(vec![Interval::new(7, 10), Interval::new(2, 4)]),
+        1
+    );
+
+    assert_eq!(
+        min_meeting_rooms(vec![
+            Interval::new(1, 5),
+            Interval::new(2, 3),
+            Interval::new(4, 6),
+            Interval::new(5, 7)
+        ]),
+        2
+    );
+
+    assert_eq!(min_meeting_rooms(vec![]), 0);
+
+    println!("All tests passed!");
+}

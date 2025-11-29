@@ -1,0 +1,34 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! ```
+
+// Given an integer array nums, find the subarray with the largest sum, and return its sum.
+
+// Version 1: Kadane's Algorithm - Reset approach
+pub fn max_sub_array(nums: Vec<i32>) -> i32 {
+   todo!() 
+}
+
+pub fn max_sub_array_1(nums: Vec<i32>) -> i32 {
+    let mut max_sum = nums[0];
+    let mut current_sum = nums[0];
+
+    for &num in &nums[1..] {
+        // Either extend current subarray or start new one
+        current_sum = num.max(current_sum + num);
+        max_sum = max_sum.max(current_sum);
+    }
+
+    max_sum
+}
+
+fn main() {
+    assert_eq!(max_sub_array(vec![-2, 1, -3, 4, -1, 2, 1, -5, 4]), 6);
+    assert_eq!(max_sub_array(vec![1]), 1);
+    assert_eq!(max_sub_array(vec![5, 4, -1, 7, 8]), 23);
+    assert_eq!(max_sub_array(vec![-1]), -1);
+    assert_eq!(max_sub_array(vec![-2, -1]), -1);
+
+    println!("All tests passed!");
+}

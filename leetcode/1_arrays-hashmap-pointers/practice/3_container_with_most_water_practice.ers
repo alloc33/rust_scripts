@@ -1,0 +1,22 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! ```
+
+// You are given an integer array height of length n. There are n vertical lines drawn such that the two endpoints of the ith line are (i, 0) and (i, height[i]).
+// Find two lines that together with the x-axis form a container, such that the container contains the most water.
+// Return the maximum amount of water a container can store.
+// Notice that you may not slant the container.
+
+pub fn max_area(height: Vec<i32>) -> i32 {
+   todo!() 
+}
+
+fn main() {
+    assert_eq!(max_area(vec![1, 8, 6, 2, 5, 4, 8, 3, 7]), 49);
+    assert_eq!(max_area(vec![1, 1]), 1);
+    assert_eq!(max_area(vec![4, 3, 2, 1, 4]), 16);
+    assert_eq!(max_area(vec![1, 2, 1]), 2);
+
+    println!("All tests passed!");
+}

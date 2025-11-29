@@ -1,0 +1,25 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! ```
+
+// Given an array of intervals where intervals[i] = [starti, endi], merge all overlapping intervals, and return an array of the non-overlapping intervals that cover all the intervals in the input.
+
+pub fn merge(intervals: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
+   todo!() 
+}
+
+fn main() {
+    assert_eq!(
+        merge(vec![vec![1, 3], vec![2, 6], vec![8, 10], vec![15, 18]]),
+        vec![vec![1, 6], vec![8, 10], vec![15, 18]]
+    );
+
+    assert_eq!(merge(vec![vec![1, 4], vec![4, 5]]), vec![vec![1, 5]]);
+
+    assert_eq!(merge(vec![vec![1, 4], vec![0, 4]]), vec![vec![0, 4]]);
+
+    assert_eq!(merge(vec![vec![1, 4]]), vec![vec![1, 4]]);
+
+    println!("All tests passed!");
+}
