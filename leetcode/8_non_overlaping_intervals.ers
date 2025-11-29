@@ -1,0 +1,36 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! ```
+
+pub fn erase_overlap_intervals(intervals: Vec<Vec<i32>>) -> i32 {
+    let mut intervals = intervals;
+    // Sort by end time (greedy choice: keep intervals that end earliest)
+    intervals.sort_unstable_by_key(|interval| interval[1]);
+
+    let mut removals = 0;
+    let mut prev_end = i32::MIN;
+    
+    for interval in intervals {
+        if interval[0] < prev_end {
+            // Overlap - remove current interval
+            removals += 1;
+        } else {
+            // No overlap - keep this interval
+            prev_end = interval[1];
+        }
+    }
+    
+    removals
+}
+
+fn main() {
+    assert_eq!(erase_overlap_intervals(vec![vec![1, 2], vec![2, 3], vec![3, 4], vec![1, 3]]), 1);
+    assert_eq!(erase_overlap_intervals(vec![vec![1, 2], vec![1, 2], vec![1, 2]]), 2);
+    assert_eq!(erase_overlap_intervals(vec![vec![1, 2], vec![2, 3]]), 0);
+    assert_eq!(erase_overlap_intervals(vec![vec![1, 100], vec![11, 22], vec![1, 11], vec![2, 12]]), 2);
+    // [ 1, 11, ], [ 2, 12, ], [ 11, 22, ], [ 1, 100, ], ]
+
+    println!("All tests passed!");
+}
+
