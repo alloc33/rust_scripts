@@ -1,0 +1,91 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! ```
+
+use std::collections::HashMap;
+
+pub fn min_window(s: String, t: String) -> String {
+    // Edge case: if t is longer than s, impossible
+    if t.len() > s.len() {
+        return String::new();
+    }
+
+    // Count frequency of each character in t
+    let mut t_count: HashMap<char, i32> = HashMap::new();
+    for ch in t.chars() {
+        *t_count.entry(ch).or_insert(0) += 1;
+    }
+
+    // Number of unique characters in t that we need to match
+    let required = t_count.len();
+
+    // Track how many unique characters in current window match t's frequency
+    let mut formed = 0;
+
+    // Window character frequencies
+    let mut window_count: HashMap<char, i32> = HashMap::new();
+
+    let chars: Vec<char> = s.chars().collect();
+    let mut left = 0;
+
+    // Track minimum window [start, end, length]
+    let mut min_len = usize::MAX;
+    let mut min_left = 0;
+
+    for right in 0..chars.len() {
+        // Add character from right to window
+        let ch = chars[right];
+        *window_count.entry(ch).or_insert(0) += 1;
+
+        // Check if frequency of current character matches t's requirement
+        if let Some(&count) = t_count.get(&ch) {
+            if window_count[&ch] == count {
+                formed += 1;
+            }
+        }
+
+        // Try to shrink window from left while it's still valid
+        while formed == required && left <= right {
+            // Update minimum window if current is smaller
+            let window_len = right - left + 1;
+            if window_len < min_len {
+                min_len = window_len;
+                min_left = left;
+            }
+
+            // Remove leftmost character from window
+            let left_ch = chars[left];
+            window_count.entry(left_ch).and_modify(|e| *e -= 1);
+
+            // Check if removing this character breaks the requirement
+            if let Some(&count) = t_count.get(&left_ch) {
+                if window_count[&left_ch] < count {
+                    formed -= 1;
+                }
+            }
+
+            left += 1;
+        }
+    }
+
+    // Return result
+    if min_len == usize::MAX {
+        String::new()
+    } else {
+        chars[min_left..min_left + min_len].iter().collect()
+    }
+}
+
+fn main() {
+    assert_eq!(
+        min_window("ADOBECODEBANC".to_string(), "ABC".to_string()),
+        "BANC"
+    );
+    assert_eq!(min_window("a".to_string(), "a".to_string()), "a");
+    assert_eq!(min_window("a".to_string(), "aa".to_string()), "");
+    assert_eq!(min_window("ab".to_string(), "b".to_string()), "b");
+    assert_eq!(min_window("abc".to_string(), "cba".to_string()), "abc");
+
+    println!("All tests passed!");
+}
