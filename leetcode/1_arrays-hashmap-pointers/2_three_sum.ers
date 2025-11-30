@@ -12,6 +12,10 @@ pub fn three_sum(nums: Vec<i32>) -> Vec<Vec<i32>> {
     let mut nums = nums;
     // Sort array to enable two-pointer technique
     // Time: O(n log n)
+
+    // NOTE: Sorting is the key here!
+    // sorted: [-4, -1, -1, 0, 1, 2]
+    // index:    0   1   2  3  4  5
     nums.sort_unstable();
     let mut result = Vec::new();
 
