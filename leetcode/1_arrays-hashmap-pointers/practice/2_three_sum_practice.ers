@@ -7,7 +7,7 @@
 // Notice that the solution set must not contain duplicate triplets.
 
 pub fn three_sum(nums: Vec<i32>) -> Vec<Vec<i32>> {
-   todo!() 
+    todo!()
 }
 
 fn main() {

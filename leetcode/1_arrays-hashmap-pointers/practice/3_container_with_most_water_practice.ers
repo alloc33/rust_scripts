@@ -9,7 +9,7 @@
 // Notice that you may not slant the container.
 
 pub fn max_area(height: Vec<i32>) -> i32 {
-   todo!() 
+    todo!()
 }
 
 fn main() {
