@@ -7,7 +7,7 @@
 
 // Version 1: Kadane's Algorithm - Reset approach
 pub fn max_sub_array(nums: Vec<i32>) -> i32 {
-   todo!() 
+    todo!()
 }
 
 pub fn max_sub_array_1(nums: Vec<i32>) -> i32 {

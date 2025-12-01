@@ -6,7 +6,7 @@
 // Given an array of intervals where intervals[i] = [starti, endi], merge all overlapping intervals, and return an array of the non-overlapping intervals that cover all the intervals in the input.
 
 pub fn merge(intervals: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
-   todo!() 
+    todo!()
 }
 
 fn main() {
