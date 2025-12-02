@@ -1,0 +1,44 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! ```
+
+use std::io::prelude::*;
+use std::net::{TcpListener, TcpStream};
+use std::thread;
+
+fn main() {
+    let listener = TcpListener::bind("127.0.0.1:8080").unwrap();
+    println!("Server is running on http://127.0.0.1:8080");
+
+    for stream in listener.incoming() {
+        let stream = stream.unwrap();
+        thread::spawn(|| {
+            handle_connection(stream);
+        });
+    }
+}
+
+fn handle_connection(mut stream: TcpStream) {
+    let mut buffer = [0u8; 1024];
+    let bytes_read = stream.read(&mut buffer).unwrap();
+    let request = String::from_utf8_lossy(&buffer[..bytes_read]);
+    let request_line = request.lines().next().unwrap_or("");
+    let (status, content) = match &request_line {
+        s if s.starts_with("GET / ") => ("200 OK", "Hello from Rust HTTP server!"),
+        s if s.starts_with("GET /api ") => (
+            "200 OK",
+            r#"{"message": "Hello from API", "status": "success"}"#,
+        ),
+        _ => ("404 NOT FOUND", "404 - Page Not Foun"),
+    };
+
+    let response = format!(
+        "HTTP/1.1 {}\r\nContent-Length: {}\r\n\r\n{}",
+        status,
+        content.len(),
+        content
+    );
+    stream.write_all(response.as_bytes()).unwrap();
+    stream.flush().unwrap();
+}
