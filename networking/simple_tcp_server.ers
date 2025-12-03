@@ -1,3 +1,8 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! ```
+
 // ========== SERVER ==========
 
 // Import Read and Write traits to enable reading from and writing to streams
