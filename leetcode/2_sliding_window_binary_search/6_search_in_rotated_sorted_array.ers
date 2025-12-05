@@ -14,34 +14,55 @@ You must write an algorithm with O(log n) runtime complexity.
 */
 
 pub fn search(nums: Vec<i32>, target: i32) -> i32 {
+	// Binary search pointers
 	let (mut left, mut right) = (0, nums.len() - 1);
 
 	while left <= right {
+		// Calculate middle index (avoids overflow compared to (left+right)/2)
 		let mid = left + (right - left) / 2;
 
-		// Found target
+		// Check if we found the target at middle position
 		if nums[mid] == target {
 			return mid as i32;
 		}
 
-		// Left half is sorted
+		// Determine which half of the array is properly sorted
+		// In a rotated array, at least one half is always sorted
+		// Example: [4,5,6,7,0,1,2] - left [4,5,6,7] is sorted
 		if nums[left] <= nums[mid] {
+			// Left half [left...mid] is sorted (ascending order)
+
+			// Check if target falls within the sorted left half's range
+			// Target must be >= nums[left] AND < nums[mid]
 			if nums[left] <= target && target < nums[mid] {
+				// Target is in the sorted left half
+				// Narrow search to left half
 				right = mid - 1;
 			} else {
+				// Target is NOT in sorted left half
+				// Must be in right half (which may contain the rotation point)
 				left = mid + 1;
 			}
 		}
-		// Right half is sorted
+		// Right half [mid...right] is sorted
 		else {
+			// Right half [mid...right] is sorted (ascending order)
+
+			// Check if target falls within the sorted right half's range
+			// Target must be > nums[mid] AND <= nums[right]
 			if nums[mid] < target && target <= nums[right] {
+				// Target is in the sorted right half
+				// Narrow search to right half
 				left = mid + 1;
 			} else {
+				// Target is NOT in sorted right half
+				// Must be in left half (which contains the rotation point)
 				right = mid - 1;
 			}
 		}
 	}
 
+	// Target not found in array
 	-1
 }
 
