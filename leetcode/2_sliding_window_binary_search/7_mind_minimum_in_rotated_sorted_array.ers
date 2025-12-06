@@ -18,8 +18,7 @@ You must write an algorithm that runs in O(log n) time.
 
 pub fn find_min(nums: Vec<i32>) -> i32 {
 	// Binary search pointers
-	let mut left = 0;
-	let mut right = nums.len() - 1;
+	let (mut left, mut right) = (0, nums.len() - 1);
 
 	// Continue until left and right converge on minimum element
 	while left < right {
