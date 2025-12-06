@@ -3,30 +3,61 @@
 //! [dependencies]
 //! ```
 
+/*
+You are given an m x n integer matrix matrix with the following two properties:
+
+	Each row is sorted in non-decreasing order.
+	The first integer of each row is greater than the last integer of the previous row.
+
+Given an integer target, return true if target is in matrix or false otherwise.
+
+You must write a solution in O(log(m * n)) time complexity.
+
+Constraints:
+
+	m == matrix.length
+	n == matrix[i].length
+	1 <= m, n <= 100
+	-104 <= matrix[i][j], target <= 104
+*/
+
 pub fn search_matrix(matrix: Vec<Vec<i32>>, target: i32) -> bool {
+	// Get matrix dimensions
 	let m = matrix.len();
 	let n = matrix[0].len();
 
-	let mut left = 0;
-	let mut right = (m * n) as i32 - 1; // Use i32 instead of usize
+	// Use i32 for left/right to avoid underflow when subtracting
+	let mut left = 0_i32;
+	let mut right = (m * n - 1) as i32;
 
 	while left <= right {
+		// Calculate middle index in the virtual 1D array
 		let mid = left + (right - left) / 2;
 
-		// Convert 1D index to 2D coordinates
-		let row = (mid as usize) / n;
-		let col = (mid as usize) % n;
+		// Convert mid back to usize for indexing
+		let mid_usize = mid as usize;
+
+		// Convert 1D index to 2D matrix coordinates
+		// row = how many complete rows we've passed
+		// col = position within current row
+		let row = mid_usize / n;
+		let col = mid_usize % n;
 		let mid_value = matrix[row][col];
 
+		// Standard binary search comparison
 		if mid_value == target {
 			return true;
 		} else if mid_value < target {
+			// Target is larger, search right half
 			left = mid + 1;
 		} else {
-			right = mid - 1; // Now safe with i32!
+			// Target is smaller, search left half
+			// Safe with i32 (can go negative, loop will exit)
+			right = mid - 1;
 		}
 	}
 
+	// Target not found
 	false
 }
 
