@@ -1,0 +1,72 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! ```
+
+/*
+Koko loves to eat bananas. There are n piles of bananas, the ith pile has piles[i] bananas. The guards have gone and will come back in h hours.
+
+Koko can decide her bananas-per-hour eating speed of k. Each hour, she chooses some pile of bananas and eats k bananas from that pile. If the pile has less than k bananas, she eats all of them instead and will not eat any more bananas during this hour.
+
+Koko likes to eat slowly but still wants to finish eating all the bananas before the guards return.
+
+Return the minimum integer k such that she can eat all the bananas within h hours.
+
+-/-/-/-/-/-/-/-/-/-/
+Koko has piles of bananas
+Guards return in h hours
+She picks a speed k (bananas per hour)
+Each hour she eats from ONE pile (up to k bananas)
+Find MINIMUM speed to finish all piles before guards return
+Constraints:
+-/-/-/-/-/-/-/-/-/-/
+
+Constraints:
+
+	1 <= piles.length <= 10^4
+	piles.length <= h <= 10^9
+	1 <= piles[i] <= 10^9
+*/
+
+pub fn min_eating_speed(piles: Vec<i32>, h: i32) -> i32 {
+	// Binary search on eating speed (bananas per hour)
+	// Minimum possible speed is 1 banana/hour
+	let mut left = 1;
+
+	// Maximum possible speed is the largest pile
+	// (eating the biggest pile in 1 hour is the fastest we'd ever need)
+	let mut right = *piles.iter().max().unwrap();
+
+	// Binary search to find minimum valid eating speed
+	while left < right {
+		// Try middle speed between left and right
+		let mid = left + (right - left) / 2;
+
+		// Calculate total hours needed to eat all piles at speed 'mid'
+		// For each pile: hours = ceiling(pile_size / eating_speed)
+		// Ceiling division formula: (pile + speed - 1) / speed
+		let hours_needed: i32 = piles.iter().map(|&pile| (pile + mid - 1) / mid).sum();
+
+		// If Koko can finish all piles within h hours at speed 'mid'
+		// then 'mid' is a valid speed, but try to find slower (smaller) speed
+		if hours_needed <= h {
+			right = mid; // Search lower speeds [left, mid]
+		} else {
+			// Speed 'mid' is too slow, need to eat faster
+			left = mid + 1; // Search higher speeds [mid+1, right]
+		}
+	}
+
+	// When left == right, we found the minimum valid eating speed
+	left
+}
+
+fn main() {
+	assert_eq!(min_eating_speed(vec![3, 6, 7, 11], 8), 4);
+	assert_eq!(min_eating_speed(vec![30, 11, 23, 4, 20], 5), 30);
+	assert_eq!(min_eating_speed(vec![30, 11, 23, 4, 20], 6), 23);
+	assert_eq!(min_eating_speed(vec![1, 1, 1, 1], 4), 1);
+	assert_eq!(min_eating_speed(vec![312884470], 312884469), 2);
+
+	println!("All tests passed!");
+}

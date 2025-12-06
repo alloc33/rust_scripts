@@ -1,0 +1,228 @@
+// WORKER POOL WITH CHANNELS
+// The practical pattern you'll use constantly
+// Time to code: 10 minutes
+
+use std::sync::{mpsc, Arc, Mutex};
+use std::thread;
+use std::time::Duration;
+
+// Pattern 1: SIMPLE WORKER POOL (shared receiver with Arc<Mutex>)
+fn simple_worker_pool() {
+    println!("=== Simple Worker Pool ===\n");
+    
+    let (tx, rx) = mpsc::channel();
+    let rx = Arc::new(Mutex::new(rx)); // Share receiver across workers
+    
+    // Spawn 3 workers
+    for id in 0..3 {
+        let rx = Arc::clone(&rx);
+        thread::spawn(move || {
+            loop {
+                let job = rx.lock().unwrap().recv();
+                match job {
+                    Ok(num) => {
+                        println!("Worker {} processing: {}", id, num);
+                        thread::sleep(Duration::from_millis(100));
+                    }
+                    Err(_) => {
+                        println!("Worker {} shutting down", id);
+                        break;
+                    }
+                }
+            }
+        });
+    }
+    
+    // Send work
+    for i in 1..=9 {
+        tx.send(i).unwrap();
+    }
+    
+    drop(tx); // Close channel
+    thread::sleep(Duration::from_millis(500));
+    println!();
+}
+
+// Pattern 2: THREAD POOL (reusable, like Rust's threadpool crate)
+struct ThreadPool {
+    workers: Vec<thread::JoinHandle<()>>,
+    sender: mpsc::Sender<Job>,
+}
+
+type Job = Box<dyn FnOnce() + Send + 'static>;
+
+impl ThreadPool {
+    fn new(size: usize) -> Self {
+        let (sender, receiver) = mpsc::channel::<Job>();
+        let receiver = Arc::new(Mutex::new(receiver));
+        
+        let mut workers = Vec::with_capacity(size);
+        
+        for id in 0..size {
+            let receiver = Arc::clone(&receiver);
+            
+            let handle = thread::spawn(move || {
+                loop {
+                    let job = receiver.lock().unwrap().recv();
+                    
+                    match job {
+                        Ok(job) => {
+                            println!("Worker {} executing job", id);
+                            job();
+                        }
+                        Err(_) => break,
+                    }
+                }
+            });
+            
+            workers.push(handle);
+        }
+        
+        ThreadPool { workers, sender }
+    }
+    
+    fn execute<F>(&self, f: F)
+    where
+        F: FnOnce() + Send + 'static,
+    {
+        self.sender.send(Box::new(f)).unwrap();
+    }
+}
+
+impl Drop for ThreadPool {
+    fn drop(&mut self) {
+        // Close channel to signal workers to exit
+        // (sender dropped when self.sender goes out of scope)
+        
+        // Wait for all workers to finish
+        while let Some(worker) = self.workers.pop() {
+            worker.join().unwrap();
+        }
+    }
+}
+
+fn thread_pool_example() {
+    println!("=== Thread Pool Pattern ===\n");
+    
+    let pool = ThreadPool::new(4);
+    
+    for i in 1..=8 {
+        pool.execute(move || {
+            println!("  Task {} running", i);
+            thread::sleep(Duration::from_millis(50));
+            println!("  Task {} done", i);
+        });
+    }
+    
+    thread::sleep(Duration::from_millis(300));
+    println!();
+    // Pool auto-closes when dropped
+}
+
+// Pattern 3: BOUNDED WORKER POOL (with backpressure)
+fn bounded_worker_pool() {
+    println!("=== Bounded Worker Pool (Backpressure) ===\n");
+    
+    let (tx, rx) = mpsc::sync_channel(3); // Only 3 jobs can queue
+    let rx = Arc::new(Mutex::new(rx));
+    
+    // 2 workers
+    for id in 0..2 {
+        let rx = Arc::clone(&rx);
+        thread::spawn(move || {
+            while let Ok(job) = rx.lock().unwrap().recv() {
+                println!("Worker {} processing: {}", id, job);
+                thread::sleep(Duration::from_millis(200)); // Slow
+            }
+        });
+    }
+    
+    // Try to send 10 jobs - will BLOCK when buffer full
+    for i in 1..=10 {
+        println!("Sending job {}...", i);
+        tx.send(i).unwrap(); // Blocks if buffer full!
+        println!("  Sent job {}", i);
+    }
+    
+    drop(tx);
+    thread::sleep(Duration::from_millis(1000));
+    println!();
+}
+
+fn main() {
+    println!("🔄 WORKER POOL PATTERNS\n");
+    println!("{}\n", "=".repeat(50));
+    
+    simple_worker_pool();
+    println!("{}\n", "=".repeat(50));
+    
+    thread_pool_example();
+    println!("{}\n", "=".repeat(50));
+    
+    bounded_worker_pool();
+}
+
+/*
+WHICH PATTERN TO USE?
+
+SIMPLE WORKER POOL (Arc<Mutex<Receiver>>):
+✅ Quick and dirty
+✅ Few workers (< 10)
+✅ Short-lived tasks
+❌ Mutex contention with many workers
+
+THREAD POOL (Generic Job):
+✅ Reusable
+✅ Accepts any closure
+✅ Production-ready
+✅ This is what threadpool crate does
+
+BOUNDED WORKER POOL (sync_channel):
+✅ Prevents memory exhaustion
+✅ Natural backpressure
+✅ Producer can't overwhelm workers
+✅ USE THIS for untrusted input!
+
+REAL-WORLD USAGE:
+
+// HTTP server with worker pool
+let pool = ThreadPool::new(4);
+for stream in listener.incoming() {
+    let stream = stream.unwrap();
+    pool.execute(|| handle_connection(stream));
+}
+
+// Task queue with backpressure
+let (tx, rx) = mpsc::sync_channel(100);
+for i in 0..10 {
+    spawn_worker(rx.clone());
+}
+for task in untrusted_tasks {
+    tx.send(task)?; // Blocks if queue full
+}
+
+WHY Arc<Mutex<Receiver>>?
+
+Because Receiver is NOT Clone:
+- Only one consumer can own it
+- But we want multiple threads to consume
+- Solution: Share with Arc, lock with Mutex
+
+The mutex is FINE here because:
+- Very short critical section (just recv())
+- Unlikely to have contention
+- Alternative (crossbeam) is overkill for small pools
+
+NEXT STEP:
+
+Combine this with your TCP server:
+1. Accept connection
+2. Send to worker pool via channel
+3. Worker handles request
+4. Response sent back to client
+
+This is EXACTLY how production servers work!
+
+TIME: 10 minutes to code from memory
+WHEN: After mastering basic channels
+*/

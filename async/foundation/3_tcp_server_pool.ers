@@ -1,0 +1,203 @@
+// TCP SERVER + WORKER POOL (Combining Your Knowledge)
+// This is THE pattern for production servers
+// Time to code: 15 minutes
+
+use std::io::{Read, Write};
+use std::net::{TcpListener, TcpStream};
+use std::sync::{mpsc, Arc, Mutex};
+use std::thread;
+
+// Simple thread pool from previous example
+struct ThreadPool {
+    workers: Vec<thread::JoinHandle<()>>,
+    sender: mpsc::Sender<Box<dyn FnOnce() + Send + 'static>>,
+}
+
+impl ThreadPool {
+    fn new(size: usize) -> Self {
+        let (sender, receiver) = mpsc::channel::<Box<dyn FnOnce() + Send + 'static>>();
+        let receiver = Arc::new(Mutex::new(receiver));
+        
+        let mut workers = Vec::with_capacity(size);
+        
+        for id in 0..size {
+            let receiver = Arc::clone(&receiver);
+            
+            let handle = thread::spawn(move || {
+                loop {
+                    let job = receiver.lock().unwrap().recv();
+                    
+                    match job {
+                        Ok(job) => {
+                            println!("[Worker {}] Processing request", id);
+                            job();
+                        }
+                        Err(_) => {
+                            println!("[Worker {}] Shutting down", id);
+                            break;
+                        }
+                    }
+                }
+            });
+            
+            workers.push(handle);
+        }
+        
+        ThreadPool { workers, sender }
+    }
+    
+    fn execute<F>(&self, f: F)
+    where
+        F: FnOnce() + Send + 'static,
+    {
+        self.sender.send(Box::new(f)).unwrap();
+    }
+}
+
+impl Drop for ThreadPool {
+    fn drop(&mut self) {
+        while let Some(worker) = self.workers.pop() {
+            worker.join().unwrap();
+        }
+    }
+}
+
+// Handle a single HTTP request
+fn handle_connection(mut stream: TcpStream) {
+    let mut buffer = [0; 1024];
+    
+    match stream.read(&mut buffer) {
+        Ok(n) => {
+            let request = String::from_utf8_lossy(&buffer[..n]);
+            println!("[Handler] Request: {}", 
+                     request.lines().next().unwrap_or(""));
+            
+            // Simple HTTP response
+            let response = "HTTP/1.1 200 OK\r\n\
+                           Content-Type: text/plain\r\n\
+                           \r\n\
+                           Hello from worker pool!";
+            
+            stream.write_all(response.as_bytes()).ok();
+            stream.flush().ok();
+        }
+        Err(e) => eprintln!("[Handler] Error reading: {}", e),
+    }
+}
+
+fn main() -> std::io::Result<()> {
+    println!("🚀 TCP Server + Worker Pool\n");
+    
+    let listener = TcpListener::bind("127.0.0.1:7878")?;
+    let pool = ThreadPool::new(4); // 4 worker threads
+    
+    println!("Server listening on http://127.0.0.1:7878");
+    println!("Test with: curl http://localhost:7878\n");
+    println!("Press Ctrl+C to stop\n");
+    
+    for stream in listener.incoming() {
+        match stream {
+            Ok(stream) => {
+                // Send work to pool via channel
+                pool.execute(|| {
+                    handle_connection(stream);
+                });
+            }
+            Err(e) => {
+                eprintln!("Connection failed: {}", e);
+            }
+        }
+    }
+    
+    Ok(())
+}
+
+/*
+WHAT'S HAPPENING HERE:
+
+1. TcpListener accepts connections (main thread)
+2. Each connection sent to worker pool via channel
+3. Workers process requests in parallel
+4. Main thread keeps accepting new connections
+
+WHY THIS IS BETTER THAN YOUR PREVIOUS TCP SERVER:
+
+BEFORE (one thread per connection):
+❌ 1000 connections = 1000 threads = OOM
+❌ Thread creation overhead
+❌ No control over concurrency
+
+NOW (worker pool):
+✅ Fixed number of threads (4)
+✅ Can handle 1000s of connections
+✅ Bounded resource usage
+✅ Backpressure (if using sync_channel)
+
+PRODUCTION IMPROVEMENTS:
+
+1. Use sync_channel for backpressure:
+   let (sender, receiver) = mpsc::sync_channel(100);
+   
+2. Add graceful shutdown:
+   let shutdown = Arc::new(AtomicBool::new(false));
+   
+3. Add timeouts:
+   stream.set_read_timeout(Some(Duration::from_secs(5)))?;
+   
+4. Add error handling:
+   Result<(), ServerError> everywhere
+
+5. Add metrics:
+   let requests_handled = Arc::new(AtomicUsize::new(0));
+
+WHEN TO USE THIS VS TOKIO:
+
+USE THIS (threads + channels):
+✅ < 1000 concurrent connections
+✅ CPU-bound work
+✅ Simple deployment
+✅ Easy to debug
+✅ Your case!
+
+USE TOKIO (async):
+✅ 10,000+ concurrent connections
+✅ I/O-bound work
+✅ Need to await multiple things
+✅ Calling async APIs
+✅ You're Discord/Cloudflare
+
+BENCHMARK THIS:
+
+// Threads + channels
+- 1000 req/sec: Easy
+- 10,000 req/sec: Doable
+- 100,000 req/sec: Use tokio
+
+COMBINING WITH YOUR KNOWLEDGE:
+
+You know:
+✅ TcpListener/TcpStream
+✅ Blocking I/O
+✅ HTTP parsing
+
+Add:
+✅ Channels (today)
+✅ Worker pool (today)
+✅ Arc<Mutex<>> (when needed)
+
+= Production-ready server!
+
+NEXT STEPS:
+
+1. Run this server
+2. Benchmark with: ab -n 1000 -c 10 http://localhost:7878/
+3. Compare to your single-threaded version
+4. Add graceful shutdown (from earlier pattern)
+5. Add metrics with AtomicUsize
+
+DON'T LEARN TOKIO YET!
+This pattern will serve you for 99% of use cases.
+
+TIME: 15 minutes to code from memory
+REPLACES: Most of what you'd use tokio for
+*/

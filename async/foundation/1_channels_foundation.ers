@@ -1,0 +1,276 @@
+// CHANNELS - THE FUNDAMENTAL CONCURRENCY PATTERN
+// This is THE #1 thing you must know before anything else
+// Time to code: 5-7 minutes
+
+use std::sync::mpsc;
+use std::thread;
+use std::time::Duration;
+
+// Pattern 1: PRODUCER-CONSUMER (most common)
+fn producer_consumer_example() {
+	println!("=== Pattern 1: Producer-Consumer ===\n");
+
+	let (tx, rx) = mpsc::channel();
+
+	// Producer thread
+	thread::spawn(move || {
+		for i in 1..=5 {
+			println!("Producing: {}", i);
+			tx.send(i).unwrap();
+			thread::sleep(Duration::from_millis(100));
+		}
+		// tx dropped here = channel closes
+	});
+
+	// Consumer (main thread)
+	for received in rx {
+		println!("  Consumed: {}", received);
+	}
+	println!("Channel closed!\n");
+}
+
+// Pattern 2: MULTIPLE PRODUCERS (clone the sender)
+fn multiple_producers_example() {
+	println!("=== Pattern 2: Multiple Producers ===\n");
+
+	let (tx, rx) = mpsc::channel();
+
+	for id in 0..3 {
+		let tx = tx.clone(); // Clone sender for each thread
+		thread::spawn(move || {
+			tx.send(format!("Message from worker {}", id)).unwrap();
+		});
+	}
+	drop(tx); // Drop original sender
+
+	// Receive from all producers
+	for msg in rx {
+		println!("  Received: {}", msg);
+	}
+	println!();
+}
+
+// Pattern 3: REQUEST-RESPONSE (with oneshot channel)
+fn request_response_example() {
+	println!("=== Pattern 3: Request-Response ===\n");
+
+	#[derive(Debug)]
+	enum Request {
+		Add(i32, i32, mpsc::Sender<i32>), // Includes return channel!
+		Multiply(i32, i32, mpsc::Sender<i32>),
+	}
+
+	let (tx, rx) = mpsc::channel();
+
+	// Worker thread
+	thread::spawn(move || {
+		for req in rx {
+			match req {
+				Request::Add(a, b, reply) => {
+					reply.send(a + b).unwrap();
+				},
+				Request::Multiply(a, b, reply) => {
+					reply.send(a * b).unwrap();
+				},
+			}
+		}
+	});
+
+	// Send requests and get responses
+	let (reply_tx, reply_rx) = mpsc::channel();
+	tx.send(Request::Add(5, 3, reply_tx.clone())).unwrap();
+	println!("  5 + 3 = {}", reply_rx.recv().unwrap());
+
+	tx.send(Request::Multiply(4, 7, reply_tx)).unwrap();
+	println!("  4 * 7 = {}", reply_rx.recv().unwrap());
+	println!();
+}
+
+// Pattern 4: FAN-OUT (distribute work) - WRONG vs RIGHT way
+fn fan_out_example() {
+	println!("=== Pattern 4: Fan-Out (Work Distribution) ===\n");
+
+	// WRONG: Can't clone Receiver!
+	// let (work_tx, work_rx) = mpsc::channel();
+	// let rx2 = work_rx.clone(); // ERROR: Receiver is NOT Clone
+
+	// RIGHT: Multiple channels (separate work streams)
+	let (tx1, rx1) = mpsc::channel();
+	let (tx2, rx2) = mpsc::channel();
+
+	// Worker 1
+	thread::spawn(move || {
+		for msg in rx1 {
+			println!("  Worker 1 got: {}", msg);
+		}
+	});
+
+	// Worker 2
+	thread::spawn(move || {
+		for msg in rx2 {
+			println!("  Worker 2 got: {}", msg);
+		}
+	});
+
+	// Distribute work manually
+	tx1.send("Task A").unwrap();
+	tx2.send("Task B").unwrap();
+	tx1.send("Task C").unwrap();
+
+	thread::sleep(Duration::from_millis(100));
+
+	println!("\n  Note: For true fan-out (work stealing), use crossbeam-channel");
+	println!("  Or build a worker pool with sync_channel (see Pattern 5)\n");
+}
+
+// Pattern 5: BOUNDED CHANNEL (backpressure)
+fn bounded_channel_example() {
+	println!("=== Pattern 5: Bounded Channel (Backpressure) ===\n");
+
+	let (tx, rx) = mpsc::sync_channel(2); // Buffer size = 2
+
+	thread::spawn(move || {
+		for i in 1..=5 {
+			println!("Sending {}...", i);
+			tx.send(i).unwrap(); // BLOCKS when buffer full!
+			println!("  Sent {}", i);
+		}
+	});
+
+	thread::sleep(Duration::from_millis(500));
+
+	for received in rx {
+		println!("  Processing: {}", received);
+		thread::sleep(Duration::from_millis(200)); // Slow consumer
+	}
+	println!();
+}
+
+// Pattern 6: SELECT-LIKE (try_recv for non-blocking)
+fn non_blocking_example() {
+	println!("=== Pattern 6: Non-Blocking Receive ===\n");
+
+	let (tx, rx) = mpsc::channel();
+
+	thread::spawn(move || {
+		thread::sleep(Duration::from_millis(100));
+		tx.send("delayed message").unwrap();
+	});
+
+	// Try to receive without blocking
+	for _ in 0..3 {
+		match rx.try_recv() {
+			Ok(msg) => println!("  Got: {}", msg),
+			Err(mpsc::TryRecvError::Empty) => {
+				println!("  No message yet...");
+				thread::sleep(Duration::from_millis(50));
+			},
+			Err(mpsc::TryRecvError::Disconnected) => break,
+		}
+	}
+	println!();
+}
+
+fn main() {
+	println!("🔄 CHANNELS - THE RUST CONCURRENCY FOUNDATION\n");
+	println!("{}\n", "=".repeat(50));
+
+	producer_consumer_example();
+	println!("{}\n", "=".repeat(50));
+
+	multiple_producers_example();
+	println!("{}\n", "=".repeat(50));
+
+	request_response_example();
+	println!("{}\n", "=".repeat(50));
+
+	fan_out_example();
+	println!("{}\n", "=".repeat(50));
+
+	bounded_channel_example();
+	println!("{}\n", "=".repeat(50));
+
+	non_blocking_example();
+}
+
+/*
+WHY CHANNELS FIRST?
+
+1. IDIOMATIC RUST
+   - "Share memory by communicating"
+   - Prevents data races by design
+   - Compiler-enforced safety
+
+2. SOLVES MOST PROBLEMS
+   - Task distribution
+   - Event handling
+   - Actor pattern
+   - Pipeline processing
+
+3. EASIER THAN SHARED STATE
+   Compare:
+   ❌ Arc<Mutex<Vec<T>>>  // Hard to reason about
+   ✅ mpsc::channel()      // Clear ownership
+
+4. FOUNDATION FOR ASYNC
+   - Tokio's channels are the same concept
+   - Master sync first, async is easy
+
+WHEN TO USE CHANNELS VS MUTEX?
+
+USE CHANNELS:
+✅ Passing data between threads
+✅ Task queues
+✅ Event systems
+✅ One-way communication
+✅ When you can avoid shared state
+
+USE MUTEX/RWLOCK:
+✅ Shared configuration
+✅ Caches
+✅ Counters (or use atomics!)
+✅ When many threads need R/W access to same data
+
+CHANNEL TYPES:
+
+mpsc::channel()         // Unbounded, async send
+mpsc::sync_channel(n)   // Bounded, blocks when full
+crossbeam::channel()    // Production: MPMC, select!
+
+COMMON PATTERNS:
+
+1. Producer-Consumer: 1 sender → 1 receiver
+2. Work Queue: N senders → 1 receiver (worker pool)
+3. Fan-Out: 1 sender → N receivers (use crossbeam)
+4. Pub-Sub: N senders → N receivers (use crossbeam or broadcast)
+
+ANTI-PATTERNS:
+
+❌ Arc<Mutex<Channel>> // Never! Just clone the sender
+❌ Polling with try_recv in loop // Use blocking recv
+❌ Unbounded channel for untrusted input // Use sync_channel
+
+YOUR LEARNING PATH:
+
+1. ✅ Master channels (THIS)
+2. → Learn Arc (shared ownership)
+3. → Learn Mutex (only when needed)
+4. → Understand async/await concept
+5. → Then try tokio
+
+NEXT STEP:
+Code this from memory tomorrow.
+Then build:
+- A simple task queue
+- A logging system
+- A worker pool (hint: use sync_channel)
+
+DON'T LEARN TOKIO YET!
+- You don't need it for std::net servers
+- Master these fundamentals first
+- Async is just "channels + await"
+- You'll appreciate tokio more after this
+
+TIME: 5-7 minutes to code from memory
+MASTER THIS: Before touching async/tokio
+*/
