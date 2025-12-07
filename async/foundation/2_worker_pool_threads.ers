@@ -9,21 +9,27 @@ use std::time::Duration;
 // Pattern 1: SIMPLE WORKER POOL (shared receiver with Arc<Mutex>)
 fn simple_worker_pool() {
     println!("=== Simple Worker Pool ===\n");
-    
+
+    // Create channel for distributing work
     let (tx, rx) = mpsc::channel();
+    // Arc = Atomic Reference Counting (shared ownership across threads)
+    // Mutex = Ensures only one thread can receive at a time
     let rx = Arc::new(Mutex::new(rx)); // Share receiver across workers
-    
-    // Spawn 3 workers
+
+    // Spawn 3 workers that will compete for jobs
     for id in 0..3 {
-        let rx = Arc::clone(&rx);
+        let rx = Arc::clone(&rx); // Clone Arc pointer (not the channel!)
         thread::spawn(move || {
             loop {
+                // Lock mutex, receive job, unlock mutex
+                // Only one worker can receive at a time
                 let job = rx.lock().unwrap().recv();
                 match job {
                     Ok(num) => {
                         println!("Worker {} processing: {}", id, num);
                         thread::sleep(Duration::from_millis(100));
                     }
+                    // Channel closed (tx dropped), time to exit
                     Err(_) => {
                         println!("Worker {} shutting down", id);
                         break;
@@ -32,59 +38,68 @@ fn simple_worker_pool() {
             }
         });
     }
-    
-    // Send work
+
+    // Send work items to the pool
+    // Workers will race to grab jobs (work stealing)
     for i in 1..=9 {
         tx.send(i).unwrap();
     }
-    
-    drop(tx); // Close channel
+
+    drop(tx); // Close channel - signals workers to exit after finishing
     thread::sleep(Duration::from_millis(500));
     println!();
 }
 
 // Pattern 2: THREAD POOL (reusable, like Rust's threadpool crate)
 struct ThreadPool {
-    workers: Vec<thread::JoinHandle<()>>,
-    sender: mpsc::Sender<Job>,
+    workers: Vec<thread::JoinHandle<()>>, // Keep track of worker threads
+    sender: mpsc::Sender<Job>,             // Channel to send jobs to workers
 }
 
+// Job = any closure that can be executed once, sent across threads, and lives 'static
 type Job = Box<dyn FnOnce() + Send + 'static>;
 
 impl ThreadPool {
     fn new(size: usize) -> Self {
+        // Create channel for sending jobs to workers
         let (sender, receiver) = mpsc::channel::<Job>();
+        // Wrap receiver in Arc<Mutex> so all workers can share it
         let receiver = Arc::new(Mutex::new(receiver));
-        
+
         let mut workers = Vec::with_capacity(size);
-        
+
+        // Spawn worker threads
         for id in 0..size {
-            let receiver = Arc::clone(&receiver);
-            
+            let receiver = Arc::clone(&receiver); // Each worker gets clone of Arc
+
             let handle = thread::spawn(move || {
                 loop {
+                    // Lock, receive, unlock
                     let job = receiver.lock().unwrap().recv();
-                    
+
                     match job {
                         Ok(job) => {
                             println!("Worker {} executing job", id);
-                            job();
+                            job(); // Execute the closure
                         }
+                        // Channel closed - exit worker loop
                         Err(_) => break,
                     }
                 }
             });
-            
+
             workers.push(handle);
         }
-        
+
         ThreadPool { workers, sender }
     }
-    
+
+    // Submit a job to be executed by the pool
     fn execute<F>(&self, f: F)
     where
-        F: FnOnce() + Send + 'static,
+        F: FnOnce() + Send + 'static, // Any closure that meets these bounds
     {
+        // Box the closure and send it through the channel
         self.sender.send(Box::new(f)).unwrap();
     }
 }
@@ -92,20 +107,24 @@ impl ThreadPool {
 impl Drop for ThreadPool {
     fn drop(&mut self) {
         // Close channel to signal workers to exit
-        // (sender dropped when self.sender goes out of scope)
-        
-        // Wait for all workers to finish
+        // (sender dropped automatically when self.sender goes out of scope)
+        // This causes recv() to return Err in all worker threads
+
+        // Wait for all workers to finish their current jobs and exit
         while let Some(worker) = self.workers.pop() {
-            worker.join().unwrap();
+            worker.join().unwrap(); // Block until worker thread completes
         }
+        // Graceful shutdown: all jobs completed, no panics
     }
 }
 
 fn thread_pool_example() {
     println!("=== Thread Pool Pattern ===\n");
-    
+
+    // Create pool with 4 worker threads
     let pool = ThreadPool::new(4);
-    
+
+    // Submit 8 tasks - they'll be distributed across 4 workers
     for i in 1..=8 {
         pool.execute(move || {
             println!("  Task {} running", i);
@@ -113,38 +132,43 @@ fn thread_pool_example() {
             println!("  Task {} done", i);
         });
     }
-    
+
+    // Wait for tasks to complete
     thread::sleep(Duration::from_millis(300));
     println!();
-    // Pool auto-closes when dropped
+    // Pool auto-closes when dropped (Drop trait called here)
 }
 
 // Pattern 3: BOUNDED WORKER POOL (with backpressure)
 fn bounded_worker_pool() {
     println!("=== Bounded Worker Pool (Backpressure) ===\n");
-    
-    let (tx, rx) = mpsc::sync_channel(3); // Only 3 jobs can queue
+
+    // sync_channel = bounded buffer
+    // Only 3 jobs can be queued at once (prevents memory exhaustion)
+    let (tx, rx) = mpsc::sync_channel(3);
     let rx = Arc::new(Mutex::new(rx));
-    
-    // 2 workers
+
+    // 2 slow workers
     for id in 0..2 {
         let rx = Arc::clone(&rx);
         thread::spawn(move || {
             while let Ok(job) = rx.lock().unwrap().recv() {
                 println!("Worker {} processing: {}", id, job);
-                thread::sleep(Duration::from_millis(200)); // Slow
+                thread::sleep(Duration::from_millis(200)); // Slow processing
             }
         });
     }
-    
+
     // Try to send 10 jobs - will BLOCK when buffer full
     for i in 1..=10 {
         println!("Sending job {}...", i);
-        tx.send(i).unwrap(); // Blocks if buffer full!
-        println!("  Sent job {}", i);
+        // This blocks when 3 jobs are queued + 2 are being processed!
+        // Sender waits for workers to free up space
+        tx.send(i).unwrap();
+        println!("  Sent job {}", i); // Only prints after send succeeds
     }
-    
-    drop(tx);
+
+    drop(tx); // Signal shutdown
     thread::sleep(Duration::from_millis(1000));
     println!();
 }
