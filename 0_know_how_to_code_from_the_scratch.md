@@ -6,4 +6,4 @@
 - TCP Server (std Rust, no tokio).
 - TCP Client (std Rust, no tokio).
 
-- Higher-Ranked Trait Bounds (2 examples).
+- Higher-Ranked Trait Bounds.

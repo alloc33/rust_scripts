@@ -3,38 +3,8 @@
 //! [dependencies]
 //! ```
 
-// HRTB (Higher-Rank Trait Bounds) Examples in Rust
-
 // ============================================================================
-// Example 1: Custom Trait with HRTB
-// ============================================================================
-
-trait MyTrait<'a> {
-	fn process(&self, data: &'a str) -> &'a str;
-}
-
-// This function REQUIRES explicit HRTB for custom traits
-// F must implement MyTrait for ANY lifetime 'a
-fn my_function<F>(f: F)
-where
-	F: for<'a> MyTrait<'a>,
-{
-	let data = "Hello, HRTB!";
-	let result = f.process(data);
-	println!("Custom trait result: {}", result);
-}
-
-// Example implementation of MyTrait
-struct MyProcessor;
-
-impl<'a> MyTrait<'a> for MyProcessor {
-	fn process(&self, data: &'a str) -> &'a str {
-		data
-	}
-}
-
-// ============================================================================
-// Example 2: Function Trait with HRTB (copy_if pattern)
+// Example 1: Function Trait with HRTB (copy_if pattern)
 // ============================================================================
 
 // Working version with HRTB
@@ -58,14 +28,7 @@ where
 fn main() {
 	println!("=== HRTB Examples in Rust ===\n");
 
-	// Example 1: Custom Trait with HRTB
-	println!("Example 1: Custom Trait with HRTB");
-	println!("{}", "-".repeat(40));
-	let processor = MyProcessor;
-	my_function(processor);
-	println!();
-
-	// Example 2: Function Trait with HRTB
+	// Example 1: Function Trait with HRTB
 	println!("Example 2: Function Trait with HRTB (copy_if)");
 	println!("{}", "-".repeat(40));
 
