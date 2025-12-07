@@ -1,0 +1,91 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! ```
+
+// HRTB (Higher-Rank Trait Bounds) Examples in Rust
+
+// ============================================================================
+// Example 1: Custom Trait with HRTB
+// ============================================================================
+
+trait MyTrait<'a> {
+	fn process(&self, data: &'a str) -> &'a str;
+}
+
+// This function REQUIRES explicit HRTB for custom traits
+// F must implement MyTrait for ANY lifetime 'a
+fn my_function<F>(f: F)
+where
+	F: for<'a> MyTrait<'a>,
+{
+	let data = "Hello, HRTB!";
+	let result = f.process(data);
+	println!("Custom trait result: {}", result);
+}
+
+// Example implementation of MyTrait
+struct MyProcessor;
+
+impl<'a> MyTrait<'a> for MyProcessor {
+	fn process(&self, data: &'a str) -> &'a str {
+		data
+	}
+}
+
+// ============================================================================
+// Example 2: Function Trait with HRTB (copy_if pattern)
+// ============================================================================
+
+// Working version with HRTB
+fn copy_if<F>(slice: &[i32], pred: F) -> Vec<i32>
+where
+	F: for<'a> Fn(&'a i32) -> bool, // F works with any lifetime
+{
+	let mut result = vec![];
+	for element in slice {
+		if pred(element) {
+			result.push(*element);
+		}
+	}
+	result
+}
+
+// ============================================================================
+// Main Function - Demonstrating Both Examples
+// ============================================================================
+
+fn main() {
+	println!("=== HRTB Examples in Rust ===\n");
+
+	// Example 1: Custom Trait with HRTB
+	println!("Example 1: Custom Trait with HRTB");
+	println!("{}", "-".repeat(40));
+	let processor = MyProcessor;
+	my_function(processor);
+	println!();
+
+	// Example 2: Function Trait with HRTB
+	println!("Example 2: Function Trait with HRTB (copy_if)");
+	println!("{}", "-".repeat(40));
+
+	let numbers = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+	// Filter even numbers
+	let evens = copy_if(&numbers, |x| x % 2 == 0);
+	println!("Original: {:?}", numbers);
+	println!("Even numbers: {:?}", evens);
+	println!();
+
+	// Filter numbers greater than 5
+	let greater_than_5 = copy_if(&numbers, |x| *x > 5);
+	println!("Numbers > 5: {:?}", greater_than_5);
+	println!();
+
+	// Key takeaways
+	println!("=== Key Takeaways ===");
+	println!("1. HRTB (for<'a>) means 'for any lifetime'");
+	println!("2. Custom traits REQUIRE explicit HRTB: for<'a> MyTrait<'a>");
+	println!("3. Fn traits get HRTB automatically (but explicit is clearer)");
+	println!("4. HRTB allows functions to work with borrowed data of any lifetime");
+}

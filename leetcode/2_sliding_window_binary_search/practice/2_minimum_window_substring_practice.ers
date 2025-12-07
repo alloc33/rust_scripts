@@ -9,18 +9,15 @@
 // use std::collections::HashMap;
 
 pub fn min_window(s: String, t: String) -> String {
-    todo!()
+	todo!()
 }
 
 fn main() {
-    assert_eq!(
-        min_window("ADOBECODEBANC".to_string(), "ABC".to_string()),
-        "BANC"
-    );
-    assert_eq!(min_window("a".to_string(), "a".to_string()), "a");
-    assert_eq!(min_window("a".to_string(), "aa".to_string()), "");
-    assert_eq!(min_window("ab".to_string(), "b".to_string()), "b");
-    assert_eq!(min_window("abc".to_string(), "cba".to_string()), "abc");
+	assert_eq!(min_window("ADOBECODEBANC".to_string(), "ABC".to_string()), "BANC");
+	assert_eq!(min_window("a".to_string(), "a".to_string()), "a");
+	assert_eq!(min_window("a".to_string(), "aa".to_string()), "");
+	assert_eq!(min_window("ab".to_string(), "b".to_string()), "b");
+	assert_eq!(min_window("abc".to_string(), "cba".to_string()), "abc");
 
-    println!("All tests passed!");
+	println!("All tests passed!");
 }

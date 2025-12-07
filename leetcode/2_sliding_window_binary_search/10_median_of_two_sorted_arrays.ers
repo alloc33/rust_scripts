@@ -1,0 +1,75 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! ```
+
+pub fn find_median_sorted_arrays(nums1: Vec<i32>, nums2: Vec<i32>) -> f64 {
+	// Always binary search on the smaller array for efficiency
+	if nums1.len() > nums2.len() {
+		return find_median_sorted_arrays(nums2, nums1);
+	}
+
+	let m = nums1.len();
+	let n = nums2.len();
+
+	// Binary search on nums1 to find correct partition
+	let mut left = 0;
+	let mut right = m;
+
+	while left <= right {
+		// Partition nums1 at position i
+		// This means: nums1[0..i] goes to left partition
+		let partition1 = (left + right) / 2;
+
+		// Partition nums2 such that left partitions have (m+n+1)/2 elements total
+		let partition2 = (m + n + 1) / 2 - partition1;
+
+		// Get boundary elements around partitions
+		// Use i32::MIN/MAX for edge cases when partition is at array boundaries
+
+		// Max element on left side of nums1 partition
+		let max_left1 = if partition1 == 0 { i32::MIN } else { nums1[partition1 - 1] };
+
+		// Min element on right side of nums1 partition
+		let min_right1 = if partition1 == m { i32::MAX } else { nums1[partition1] };
+
+		// Max element on left side of nums2 partition
+		let max_left2 = if partition2 == 0 { i32::MIN } else { nums2[partition2 - 1] };
+
+		// Min element on right side of nums2 partition
+		let min_right2 = if partition2 == n { i32::MAX } else { nums2[partition2] };
+
+		// Check if we found correct partition
+		// Correct partition means: max(left) <= min(right) for both arrays
+		if max_left1 <= min_right2 && max_left2 <= min_right1 {
+			// Found correct partition!
+
+			// If total length is even: median = average of max(left) and min(right)
+			if (m + n) % 2 == 0 {
+				return (max_left1.max(max_left2) as f64 + min_right1.min(min_right2) as f64) / 2.0;
+			} else {
+				// If total length is odd: median = max(left)
+				return max_left1.max(max_left2) as f64;
+			}
+		} else if max_left1 > min_right2 {
+			// nums1 partition too far right, move left
+			right = partition1 - 1;
+		} else {
+			// nums1 partition too far left, move right
+			left = partition1 + 1;
+		}
+	}
+
+	// Should never reach here with valid input
+	0.0
+}
+
+fn main() {
+	assert_eq!(find_median_sorted_arrays(vec![1, 3], vec![2]), 2.0);
+	assert_eq!(find_median_sorted_arrays(vec![1, 2], vec![3, 4]), 2.5);
+	assert_eq!(find_median_sorted_arrays(vec![1, 3, 8, 9], vec![2, 4, 5, 6, 7]), 5.0);
+	assert_eq!(find_median_sorted_arrays(vec![], vec![1]), 1.0);
+	assert_eq!(find_median_sorted_arrays(vec![2], vec![]), 2.0);
+
+	println!("All tests passed!");
+}
