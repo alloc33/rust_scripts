@@ -50,7 +50,7 @@ fn multiple_producers_example() {
 		});
 	}
 	drop(tx); // IMPORTANT: Drop original sender so channel can close
-	          // Without this, rx.iter() would wait forever!
+		   // Without this, rx.iter() would wait forever!
 
 	// Receive from all producers
 	// Order is non-deterministic (depends on thread scheduling)
@@ -167,7 +167,7 @@ fn bounded_channel_example() {
 	for received in rx {
 		println!("  Processing: {}", received);
 		thread::sleep(Duration::from_millis(200)); // Simulates slow processing
-		// Each recv() unblocks the sender to send one more item
+		                                     // Each recv() unblocks the sender to send one more item
 	}
 	println!();
 }

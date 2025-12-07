@@ -1,0 +1,106 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! ```
+
+use std::{
+	io::{Read, Write},
+	net::{TcpListener, TcpStream},
+	sync::{mpsc, Arc, Mutex},
+	thread,
+};
+
+type Job = Box<dyn FnOnce() + Send + 'static>;
+
+struct ThreadPool {
+	workers: Vec<thread::JoinHandle<()>>,
+	sender: mpsc::Sender<Job>,
+}
+
+impl ThreadPool {
+	fn new(size: usize) -> Self {
+		let (sender, receiver) = mpsc::channel::<Job>();
+		let receiver = Arc::new(Mutex::new(receiver));
+		let mut workers = Vec::with_capacity(size);
+
+		for id in 0..size {
+			let receiver = Arc::clone(&receiver);
+
+			let handle = thread::spawn(move || loop {
+				let job = receiver.lock().unwrap().recv();
+
+				match job {
+					Ok(job) => {
+						println!("[Worker {id}] Processing request");
+						job();
+					},
+					Err(_) => {
+						println!("[Worker {id}] Shutting down");
+						break;
+					},
+				}
+			});
+
+			workers.push(handle);
+		}
+
+		ThreadPool { workers, sender }
+	}
+
+	fn execute<F>(&self, f: F)
+	where
+		F: FnOnce() + Send + 'static,
+	{
+		self.sender.send(Box::new(f)).unwrap();
+	}
+}
+
+impl Drop for ThreadPool {
+	fn drop(&mut self) {
+		while let Some(worker) = self.workers.pop() {
+			worker.join().unwrap();
+		}
+	}
+}
+
+fn handle_connection(mut stream: TcpStream) {
+	let mut buffer = [0u8; 1024];
+
+	match stream.read(&mut buffer) {
+		Ok(n) => {
+			let request = String::from_utf8_lossy(&buffer[..n]);
+			println!("[Handler] Request: {}", request.lines().next().unwrap_or(""));
+
+			let response = "HTTP/1.1 200 OK\r\n\
+                           Content-Type: text/plain\r\n\
+                           \r\n\
+                           Hello from worker pool!";
+
+			stream.write_all(response.as_bytes()).unwrap();
+			stream.flush().ok();
+		},
+		Err(e) => eprintln!("[Handler] Error reading: {e}"),
+	}
+}
+
+fn main() -> std::io::Result<()> {
+	let listener = TcpListener::bind("127.0.0.1:7878")?;
+	let pool = ThreadPool::new(4);
+
+	println!("TCP server is listening on port 7878");
+
+	for stream in listener.incoming() {
+		match stream {
+			Ok(stream) => {
+				pool.execute(|| {
+					handle_connection(stream);
+				});
+			},
+			Err(e) => {
+				eprintln!("Connection failed: {e}");
+			},
+		}
+	}
+
+	Ok(())
+}
