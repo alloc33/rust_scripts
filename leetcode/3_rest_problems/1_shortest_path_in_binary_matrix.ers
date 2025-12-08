@@ -1,0 +1,121 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! ```
+
+// Given an n x n binary matrix grid, return the length of the shortest clear path in the matrix. If there is no clear path, return -1.
+
+// A clear path in a binary matrix is a path from the top-left cell (i.e., (0, 0)) to the bottom-right cell (i.e., (n - 1, n - 1)) such that:
+
+//     All the visited cells of the path are 0.
+//     All the adjacent cells of the path are 8-directionally connected (i.e., they are different and they share an edge or a corner).
+
+// The length of a clear path is the number of visited cells of this path.
+
+//
+
+// Example 1:
+
+// Input: grid = [[0,1],[1,0]]
+// Output: 2
+
+// Example 2:
+
+// Input: grid = [[0,0,0],[1,1,0],[1,1,0]]
+// Output: 4
+
+// Example 3:
+
+// Input: grid = [[1,0,0],[1,1,0],[1,1,0]]
+// Output: -1
+
+//
+
+// Constraints:
+
+//     n == grid.length
+//     n == grid[i].length
+//     1 <= n <= 100
+//     grid[i][j] is 0 or 1
+
+use std::collections::VecDeque;
+
+pub fn shortest_path_binary_matrix(grid: Vec<Vec<i32>>) -> i32 {
+    let mut grid = grid;
+	let n = grid.len();
+
+	// Edge case: start or end is blocked
+	if grid[0][0] == 1 || grid[n - 1][n - 1] == 1 {
+		return -1;
+	}
+
+	// Edge case: single cell grid
+	if n == 1 {
+		return 1;
+	}
+
+	// 8 directions: up, down, left, right, and 4 diagonals
+	// (row_offset, col_offset)
+	let directions = [
+		(-1, -1),
+		(-1, 0),
+		(-1, 1), // top-left, top, top-right
+		(0, -1),
+		(0, 1), // left, right
+		(1, -1),
+		(1, 0),
+		(1, 1), // bottom-left, bottom, bottom-right
+	];
+
+	// BFS queue: stores (row, col, path_length)
+	let mut queue = VecDeque::new();
+
+	// Start from top-left corner with path length 1
+	queue.push_back((0, 0, 1));
+
+	// Mark starting cell as visited (use grid itself to avoid extra space)
+	grid[0][0] = 1;
+
+	while let Some((row, col, length)) = queue.pop_front() {
+		// Try all 8 directions
+		for &(dr, dc) in &directions {
+			let new_row = row as i32 + dr;
+			let new_col = col as i32 + dc;
+
+			// Check if new position is within bounds
+			if new_row < 0 || new_row >= n as i32 || new_col < 0 || new_col >= n as i32 {
+				continue;
+			}
+
+			let new_row = new_row as usize;
+			let new_col = new_col as usize;
+
+			// Check if reached destination
+			if new_row == n - 1 && new_col == n - 1 {
+				return length + 1;
+			}
+
+			// Check if cell is clear (0) and not visited
+			if grid[new_row][new_col] == 0 {
+				// Mark as visited
+				grid[new_row][new_col] = 1;
+
+				// Add to queue with incremented path length
+				queue.push_back((new_row, new_col, length + 1));
+			}
+		}
+	}
+
+	// No path found
+	-1
+}
+
+fn main() {
+	assert_eq!(shortest_path_binary_matrix(vec![vec![0, 1], vec![1, 0]]), 2);
+	assert_eq!(shortest_path_binary_matrix(vec![vec![0, 0, 0], vec![1, 1, 0], vec![1, 1, 0]]), 4);
+	assert_eq!(shortest_path_binary_matrix(vec![vec![1, 0, 0], vec![1, 1, 0], vec![1, 1, 0]]), -1);
+	assert_eq!(shortest_path_binary_matrix(vec![vec![0]]), 1);
+	assert_eq!(shortest_path_binary_matrix(vec![vec![0, 0], vec![0, 0]]), 2);
+
+	println!("All tests passed!");
+}
