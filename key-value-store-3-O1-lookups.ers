@@ -3,7 +3,9 @@
 //! [dependencies]
 //! ```
 
-// Implement a collection such that you can insert a key/value pair in O(1), delete some value (by giving the key) in O(1), and ask for a pseudo-random value from the collection in O(1). You may use a library to generate a random number.
+// Implement a collection such that you can insert a key/value pair in O(1), delete some value (by
+// giving the key) in O(1), and ask for a pseudo-random value from the collection in O(1). You may
+// use a library to generate a random number.
 
 use std::borrow::Borrow;
 use std::collections::HashMap;
@@ -19,10 +21,7 @@ where
     K: Eq + Hash + Clone,
 {
     pub fn new() -> Self {
-        RandomMap {
-            map: HashMap::new(),
-            keys: Vec::new(),
-        }
+        RandomMap { map: HashMap::new(), keys: Vec::new() }
     }
 
     /// Insert a key/value pair. Returns the old value if key existed.
@@ -75,7 +74,8 @@ where
 
         // Using a simple method without external rand crate
         use std::collections::hash_map::RandomState;
-        use std::hash::{BuildHasher, Hasher};
+        use std::hash::BuildHasher;
+        use std::hash::Hasher;
 
         let random_state = RandomState::new();
         let mut hasher = random_state.build_hasher();

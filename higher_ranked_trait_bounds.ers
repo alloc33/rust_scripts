@@ -10,15 +10,15 @@
 // Working version with HRTB
 fn copy_if<F>(slice: &[i32], pred: F) -> Vec<i32>
 where
-	F: for<'a> Fn(&'a i32) -> bool, // F works with any lifetime
+    F: for<'a> Fn(&'a i32) -> bool, // F works with any lifetime
 {
-	let mut result = vec![];
-	for element in slice {
-		if pred(element) {
-			result.push(*element);
-		}
-	}
-	result
+    let mut result = vec![];
+    for element in slice {
+        if pred(element) {
+            result.push(*element);
+        }
+    }
+    result
 }
 
 // ============================================================================
@@ -26,29 +26,29 @@ where
 // ============================================================================
 
 fn main() {
-	println!("=== HRTB Examples in Rust ===\n");
+    println!("=== HRTB Examples in Rust ===\n");
 
-	// Example 1: Function Trait with HRTB
-	println!("Example 2: Function Trait with HRTB (copy_if)");
-	println!("{}", "-".repeat(40));
+    // Example 1: Function Trait with HRTB
+    println!("Example 2: Function Trait with HRTB (copy_if)");
+    println!("{}", "-".repeat(40));
 
-	let numbers = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    let numbers = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
-	// Filter even numbers
-	let evens = copy_if(&numbers, |x| x % 2 == 0);
-	println!("Original: {:?}", numbers);
-	println!("Even numbers: {:?}", evens);
-	println!();
+    // Filter even numbers
+    let evens = copy_if(&numbers, |x| x % 2 == 0);
+    println!("Original: {:?}", numbers);
+    println!("Even numbers: {:?}", evens);
+    println!();
 
-	// Filter numbers greater than 5
-	let greater_than_5 = copy_if(&numbers, |x| *x > 5);
-	println!("Numbers > 5: {:?}", greater_than_5);
-	println!();
+    // Filter numbers greater than 5
+    let greater_than_5 = copy_if(&numbers, |x| *x > 5);
+    println!("Numbers > 5: {:?}", greater_than_5);
+    println!();
 
-	// Key takeaways
-	println!("=== Key Takeaways ===");
-	println!("1. HRTB (for<'a>) means 'for any lifetime'");
-	println!("2. Custom traits REQUIRE explicit HRTB: for<'a> MyTrait<'a>");
-	println!("3. Fn traits get HRTB automatically (but explicit is clearer)");
-	println!("4. HRTB allows functions to work with borrowed data of any lifetime");
+    // Key takeaways
+    println!("=== Key Takeaways ===");
+    println!("1. HRTB (for<'a>) means 'for any lifetime'");
+    println!("2. Custom traits REQUIRE explicit HRTB: for<'a> MyTrait<'a>");
+    println!("3. Fn traits get HRTB automatically (but explicit is clearer)");
+    println!("4. HRTB allows functions to work with borrowed data of any lifetime");
 }

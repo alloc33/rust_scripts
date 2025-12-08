@@ -69,12 +69,12 @@ impl Processor {
                 // Delegate to math strategy
                 let result = MathHandler.handle(math_op);
                 format!("Result: {}", result)
-            }
+            },
             Operation::Text(string_op) => {
                 // Delegate to string strategy
                 let result = StringHandler.handle(string_op);
                 format!("Result: {}", result)
-            }
+            },
         }
     }
 }

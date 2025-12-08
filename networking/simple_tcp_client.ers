@@ -6,66 +6,68 @@
 // ========== CLIENT ==========
 
 // Import the entire io module to access standard input/output functionality
-use std::io::{self, Read, Write};
+use std::io::Read;
+use std::io::Write;
+use std::io::{self};
 // Import TcpStream to create a TCP connection to the server
 use std::net::TcpStream;
 
 // Main function where the program starts
 fn main() {
-	// Connect to the server at IP address 127.0.0.1 (localhost) on port 7878
-	// expect() will panic with the given message if connection fails
-	let mut stream = TcpStream::connect("127.0.0.1:7878").expect("Failed to connect to server");
+    // Connect to the server at IP address 127.0.0.1 (localhost) on port 7878
+    // expect() will panic with the given message if connection fails
+    let mut stream = TcpStream::connect("127.0.0.1:7878").expect("Failed to connect to server");
 
-	// Print a message confirming successful connection to the server
-	println!("Connected to server at 127.0.0.1:7878");
-	// Print instructions for the user
-	println!("Type messages to send (or 'quit' to exit):");
+    // Print a message confirming successful connection to the server
+    println!("Connected to server at 127.0.0.1:7878");
+    // Print instructions for the user
+    println!("Type messages to send (or 'quit' to exit):");
 
-	// Start an infinite loop to keep reading user input and communicating with server
-	loop {
-		// Print the prompt symbol "> " without a newline
-		print!("> ");
-		// Flush stdout to make sure the prompt is displayed immediately
-		io::stdout().flush().unwrap();
+    // Start an infinite loop to keep reading user input and communicating with server
+    loop {
+        // Print the prompt symbol "> " without a newline
+        print!("> ");
+        // Flush stdout to make sure the prompt is displayed immediately
+        io::stdout().flush().unwrap();
 
-		// Create a new empty String to store user input
-		let mut input = String::new();
-		// Read a line from standard input (keyboard) and store it in the input variable
-		io::stdin().read_line(&mut input).unwrap();
+        // Create a new empty String to store user input
+        let mut input = String::new();
+        // Read a line from standard input (keyboard) and store it in the input variable
+        io::stdin().read_line(&mut input).unwrap();
 
-		// Remove whitespace (like newline characters) from the beginning and end of input
-		let input = input.trim();
-		// Check if the user typed "quit"
-		if input == "quit" {
-			// Exit the loop and end the program
-			break;
-		}
+        // Remove whitespace (like newline characters) from the beginning and end of input
+        let input = input.trim();
+        // Check if the user typed "quit"
+        if input == "quit" {
+            // Exit the loop and end the program
+            break;
+        }
 
-		// Convert the input string to bytes and send all of it to the server
-		stream.write_all(input.as_bytes()).unwrap();
+        // Convert the input string to bytes and send all of it to the server
+        stream.write_all(input.as_bytes()).unwrap();
 
-		// Create a buffer array of 512 bytes to store the server's response
-		let mut buffer = [0; 512];
-		// Try to read data from the server into the buffer
-		match stream.read(&mut buffer) {
-			// If reading was successful, 'size' contains the number of bytes read
-			Ok(size) => {
-				// Convert the bytes we received into a UTF-8 string
-				// Only convert the portion of the buffer that contains actual data (0 to size)
-				let response = String::from_utf8_lossy(&buffer[..size]);
-				// Print the server's response to the console
-				println!("Server response: {}", response);
-			},
-			// If reading failed, 'e' contains the error details
-			Err(e) => {
-				// Print an error message with the error details
-				println!("Failed to receive data: {}", e);
-				// Exit the loop because the connection is broken
-				break;
-			},
-		}
-	}
+        // Create a buffer array of 512 bytes to store the server's response
+        let mut buffer = [0; 512];
+        // Try to read data from the server into the buffer
+        match stream.read(&mut buffer) {
+            // If reading was successful, 'size' contains the number of bytes read
+            Ok(size) => {
+                // Convert the bytes we received into a UTF-8 string
+                // Only convert the portion of the buffer that contains actual data (0 to size)
+                let response = String::from_utf8_lossy(&buffer[..size]);
+                // Print the server's response to the console
+                println!("Server response: {}", response);
+            },
+            // If reading failed, 'e' contains the error details
+            Err(e) => {
+                // Print an error message with the error details
+                println!("Failed to receive data: {}", e);
+                // Exit the loop because the connection is broken
+                break;
+            },
+        }
+    }
 
-	// Print a message when the connection is closed and the program is ending
-	println!("Disconnected from server");
+    // Print a message when the connection is closed and the program is ending
+    println!("Disconnected from server");
 }

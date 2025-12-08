@@ -3,7 +3,9 @@
 //! [dependencies]
 //! ```
 
-use std::sync::{Arc, Condvar, Mutex};
+use std::sync::Arc;
+use std::sync::Condvar;
+use std::sync::Mutex;
 use std::thread;
 
 fn main() {
@@ -11,32 +13,32 @@ fn main() {
     // when the last Arc reference is dropped (RAII for shared resources)
     let outer = Arc::new((Mutex::new(0), Condvar::new()));
     let inner = outer.clone();
-    
+
     thread::spawn(move || {
         let (mutex, cond_var) = &*inner;
-        
+
         // RAII Acquisition: lock() returns a MutexGuard that represents exclusive access
         // The guard's existence proves we hold the lock - no manual locking needed
         let mut guard = mutex.lock().unwrap();
-        
+
         // RAII Access: We can only modify the protected value through the guard
         // The type system prevents access without holding the lock
         *guard += 1;
         println!("inner guard={guard}");
-        
+
         // Notify waiting thread while still holding the lock
         cond_var.notify_one();
-        
+
         // RAII Release: Lock automatically released here when guard drops at scope end
         // Even if the code panics, Drop trait guarantees the lock is released
     });
-    
+
     let (mutex, cond_var) = &*outer;
-    
+
     // RAII Acquisition: Acquire lock and get guard in the outer thread
     let mut guard = mutex.lock().unwrap();
     println!("outer before wait guard={guard}");
-    
+
     // RAII Pattern Extension: wait() demonstrates RAII's composability
     // It temporarily releases the lock (drops the old guard), waits for signal,
     // then re-acquires the lock and returns a NEW guard - all atomically
@@ -46,9 +48,9 @@ fn main() {
         guard = cond_var.wait(guard).unwrap();
         // The new guard still follows RAII - will auto-release when dropped
     }
-    
+
     println!("outer after wait guard={guard}");
-    
+
     // RAII Release: Lock automatically released when guard drops here
     // RAII Cleanup: Arc automatically deallocates Mutex+Condvar when both
     // outer and inner Arcs are dropped (reference counting RAII)

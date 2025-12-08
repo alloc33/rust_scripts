@@ -2,141 +2,145 @@
 // This is THE pattern for production servers
 // Time to code: 15 minutes
 
-use std::io::{Read, Write};
-use std::net::{TcpListener, TcpStream};
-use std::sync::{mpsc, Arc, Mutex};
+use std::io::Read;
+use std::io::Write;
+use std::net::TcpListener;
+use std::net::TcpStream;
+use std::sync::Arc;
+use std::sync::Mutex;
+use std::sync::mpsc;
 use std::thread;
 
 // Simple thread pool from previous example
 // This is the foundation for handling multiple TCP connections efficiently
 struct ThreadPool {
-	workers: Vec<thread::JoinHandle<()>>, // Worker thread handles
-	sender: mpsc::Sender<Box<dyn FnOnce() + Send + 'static>>, // Job queue
+    workers: Vec<thread::JoinHandle<()>>, // Worker thread handles
+    sender: mpsc::Sender<Box<dyn FnOnce() + Send + 'static>>, // Job queue
 }
 
 impl ThreadPool {
-	fn new(size: usize) -> Self {
-		// Create channel for job distribution
-		let (sender, receiver) = mpsc::channel::<Box<dyn FnOnce() + Send + 'static>>();
-		// Share receiver across all workers using Arc<Mutex>
-		let receiver = Arc::new(Mutex::new(receiver));
+    fn new(size: usize) -> Self {
+        // Create channel for job distribution
+        let (sender, receiver) = mpsc::channel::<Box<dyn FnOnce() + Send + 'static>>();
+        // Share receiver across all workers using Arc<Mutex>
+        let receiver = Arc::new(Mutex::new(receiver));
 
-		let mut workers = Vec::with_capacity(size);
+        let mut workers = Vec::with_capacity(size);
 
-		// Spawn worker threads that will handle TCP connections
-		for id in 0..size {
-			let receiver = Arc::clone(&receiver);
+        // Spawn worker threads that will handle TCP connections
+        for id in 0..size {
+            let receiver = Arc::clone(&receiver);
 
-			let handle = thread::spawn(move || {
-				loop {
-					// Wait for a job (blocking)
-					let job = receiver.lock().unwrap().recv();
+            let handle = thread::spawn(move || {
+                loop {
+                    // Wait for a job (blocking)
+                    let job = receiver.lock().unwrap().recv();
 
-					match job {
-						Ok(job) => {
-							println!("[Worker {}] Processing request", id);
-							job(); // Execute the connection handler
-						},
-						Err(_) => {
-							// Channel closed - server shutting down
-							println!("[Worker {}] Shutting down", id);
-							break;
-						},
-					}
-				}
-			});
+                    match job {
+                        Ok(job) => {
+                            println!("[Worker {}] Processing request", id);
+                            job(); // Execute the connection handler
+                        },
+                        Err(_) => {
+                            // Channel closed - server shutting down
+                            println!("[Worker {}] Shutting down", id);
+                            break;
+                        },
+                    }
+                }
+            });
 
-			workers.push(handle);
-		}
+            workers.push(handle);
+        }
 
-		ThreadPool { workers, sender }
-	}
+        ThreadPool { workers, sender }
+    }
 
-	// Submit a connection handler to the pool
-	fn execute<F>(&self, f: F)
-	where
-		F: FnOnce() + Send + 'static,
-	{
-		// Send the job through the channel
-		// One of the workers will pick it up
-		self.sender.send(Box::new(f)).unwrap();
-	}
+    // Submit a connection handler to the pool
+    fn execute<F>(&self, f: F)
+    where
+        F: FnOnce() + Send + 'static,
+    {
+        // Send the job through the channel
+        // One of the workers will pick it up
+        self.sender.send(Box::new(f)).unwrap();
+    }
 }
 
 impl Drop for ThreadPool {
-	fn drop(&mut self) {
-		// sender is dropped automatically (closes the channel)
-		// This signals all workers to exit after finishing current jobs
+    fn drop(&mut self) {
+        // sender is dropped automatically (closes the channel)
+        // This signals all workers to exit after finishing current jobs
 
-		// Wait for all workers to finish gracefully
-		while let Some(worker) = self.workers.pop() {
-			worker.join().unwrap();
-		}
-		// Clean shutdown - no requests dropped, no panics
-	}
+        // Wait for all workers to finish gracefully
+        while let Some(worker) = self.workers.pop() {
+            worker.join().unwrap();
+        }
+        // Clean shutdown - no requests dropped, no panics
+    }
 }
 
 // Handle a single HTTP request
 // This runs in a worker thread from the pool
 fn handle_connection(mut stream: TcpStream) {
-	let mut buffer = [0; 1024];
+    let mut buffer = [0; 1024];
 
-	match stream.read(&mut buffer) {
-		Ok(n) => {
-			// Parse HTTP request (first line only for demo)
-			let request = String::from_utf8_lossy(&buffer[..n]);
-			println!("[Handler] Request: {}", request.lines().next().unwrap_or(""));
+    match stream.read(&mut buffer) {
+        Ok(n) => {
+            // Parse HTTP request (first line only for demo)
+            let request = String::from_utf8_lossy(&buffer[..n]);
+            println!("[Handler] Request: {}", request.lines().next().unwrap_or(""));
 
-			// Simple HTTP response
-			// In production: parse request, route to handler, generate response
-			let response = "HTTP/1.1 200 OK\r\n\
+            // Simple HTTP response
+            // In production: parse request, route to handler, generate response
+            let response = "HTTP/1.1 200 OK\r\n\
                            Content-Type: text/plain\r\n\
                            \r\n\
                            Hello from worker pool!";
 
-			// Write response back to client
-			stream.write_all(response.as_bytes()).ok();
-			stream.flush().ok();
-			// Stream is automatically closed when it goes out of scope
-		},
-		Err(e) => eprintln!("[Handler] Error reading: {}", e),
-	}
+            // Write response back to client
+            stream.write_all(response.as_bytes()).ok();
+            stream.flush().ok();
+            // Stream is automatically closed when it goes out of scope
+        },
+        Err(e) => eprintln!("[Handler] Error reading: {}", e),
+    }
 }
 
 fn main() -> std::io::Result<()> {
-	println!("🚀 TCP Server + Worker Pool\n");
+    println!("🚀 TCP Server + Worker Pool\n");
 
-	// Bind to TCP port - this is the main thread's job
-	let listener = TcpListener::bind("127.0.0.1:7878")?;
+    // Bind to TCP port - this is the main thread's job
+    let listener = TcpListener::bind("127.0.0.1:7878")?;
 
-	// Create worker pool with 4 threads
-	// These threads will handle all incoming connections
-	let pool = ThreadPool::new(4);
+    // Create worker pool with 4 threads
+    // These threads will handle all incoming connections
+    let pool = ThreadPool::new(4);
 
-	println!("Server listening on http://127.0.0.1:7878");
-	println!("Test with: curl http://localhost:7878\n");
-	println!("Press Ctrl+C to stop\n");
+    println!("Server listening on http://127.0.0.1:7878");
+    println!("Test with: curl http://localhost:7878\n");
+    println!("Press Ctrl+C to stop\n");
 
-	// Main event loop: accept connections
-	// This is single-threaded and FAST (just accept + dispatch)
-	for stream in listener.incoming() {
-		match stream {
-			Ok(stream) => {
-				// Don't handle connection here - send to worker pool!
-				// Main thread immediately goes back to accepting connections
-				pool.execute(|| {
-					handle_connection(stream); // Executed by a worker
-				});
-			},
-			Err(e) => {
-				eprintln!("Connection failed: {}", e);
-			},
-		}
-	}
+    // Main event loop: accept connections
+    // This is single-threaded and FAST (just accept + dispatch)
+    for stream in listener.incoming() {
+        match stream {
+            Ok(stream) => {
+                // Don't handle connection here - send to worker pool!
+                // Main thread immediately goes back to accepting connections
+                pool.execute(|| {
+                    handle_connection(stream); // Executed by a worker
+                });
+            },
+            Err(e) => {
+                eprintln!("Connection failed: {}", e);
+            },
+        }
+    }
 
-	// When loop exits (Ctrl+C), pool is dropped
-	// Drop implementation waits for workers to finish
-	Ok(())
+    // When loop exits (Ctrl+C), pool is dropped
+    // Drop implementation waits for workers to finish
+    Ok(())
 }
 
 /*

@@ -6,80 +6,82 @@
 // ========== SERVER ==========
 
 // Import Read and Write traits to enable reading from and writing to streams
-use std::io::{Read, Write};
+use std::io::Read;
+use std::io::Write;
 // Import TcpListener to create a server and TcpStream to handle client connections
-use std::net::{TcpListener, TcpStream};
+use std::net::TcpListener;
+use std::net::TcpStream;
 // Import thread module to create multiple threads for handling concurrent clients
 use std::thread;
 
 // Main function where the program starts
 fn main() {
-	// Create a TCP listener that binds to all network interfaces (0.0.0.0) on port 7878
-	// This allows connections from any IP address, not just localhost
-	// unwrap() will panic if binding fails (e.g., if port is already in use)
-	let listener = TcpListener::bind("0.0.0.0:7878").unwrap();
-	// Print a message to the console showing the server is listening
-	println!("TCP Server listening on port 7878");
+    // Create a TCP listener that binds to all network interfaces (0.0.0.0) on port 7878
+    // This allows connections from any IP address, not just localhost
+    // unwrap() will panic if binding fails (e.g., if port is already in use)
+    let listener = TcpListener::bind("0.0.0.0:7878").unwrap();
+    // Print a message to the console showing the server is listening
+    println!("TCP Server listening on port 7878");
 
-	// Loop through all incoming connection attempts
-	for stream in listener.incoming() {
-		// Extract the TcpStream from the Result, panic if there's an error
-		let stream = stream.unwrap();
+    // Loop through all incoming connection attempts
+    for stream in listener.incoming() {
+        // Extract the TcpStream from the Result, panic if there's an error
+        let stream = stream.unwrap();
 
-		// Create a new thread to handle this client connection
-		// 'move' keyword transfers ownership of 'stream' to the new thread
-		// This allows multiple clients to be handled simultaneously
-		thread::spawn(move || {
-			// Call the function that will process this client's requests
-			handle_client(stream);
-		});
-	}
+        // Create a new thread to handle this client connection
+        // 'move' keyword transfers ownership of 'stream' to the new thread
+        // This allows multiple clients to be handled simultaneously
+        thread::spawn(move || {
+            // Call the function that will process this client's requests
+            handle_client(stream);
+        });
+    }
 }
 
 // Function that handles communication with a single connected client
 // Takes a mutable TcpStream so we can read from and write to it
 fn handle_client(mut stream: TcpStream) {
-	// Get the client's IP address and port number
-	// unwrap() will panic if we can't get the peer address
-	let peer = stream.peer_addr().unwrap();
-	// Print a message showing which client just connected
-	println!("Client connected: {}", peer);
+    // Get the client's IP address and port number
+    // unwrap() will panic if we can't get the peer address
+    let peer = stream.peer_addr().unwrap();
+    // Print a message showing which client just connected
+    println!("Client connected: {}", peer);
 
-	// Create a buffer array of 512 bytes to store incoming data
-	let mut buffer = [0; 512];
+    // Create a buffer array of 512 bytes to store incoming data
+    let mut buffer = [0; 512];
 
-	// Start an infinite loop to continuously read messages from the client
-	loop {
-		// Try to read data from the client into the buffer
-		match stream.read(&mut buffer) {
-			// If we successfully read 0 bytes, it means the client closed the connection
-			Ok(0) => {
-				// Print a message showing the client disconnected
-				println!("Client {} disconnected", peer);
-				// Exit the loop and end this function
-				break;
-			},
-			// If we successfully read some bytes, 'size' contains how many bytes were read
-			Ok(size) => {
-				// Convert the received bytes into a UTF-8 string
-				// Only convert the portion of the buffer that contains actual data (0 to size)
-				let msg = String::from_utf8_lossy(&buffer[..size]);
-				// Print the message we received, with the client's address
-				// trim() removes extra whitespace from the message
-				println!("Received from {}: {}", peer, msg.trim());
+    // Start an infinite loop to continuously read messages from the client
+    loop {
+        // Try to read data from the client into the buffer
+        match stream.read(&mut buffer) {
+            // If we successfully read 0 bytes, it means the client closed the connection
+            Ok(0) => {
+                // Print a message showing the client disconnected
+                println!("Client {} disconnected", peer);
+                // Exit the loop and end this function
+                break;
+            },
+            // If we successfully read some bytes, 'size' contains how many bytes were read
+            Ok(size) => {
+                // Convert the received bytes into a UTF-8 string
+                // Only convert the portion of the buffer that contains actual data (0 to size)
+                let msg = String::from_utf8_lossy(&buffer[..size]);
+                // Print the message we received, with the client's address
+                // trim() removes extra whitespace from the message
+                println!("Received from {}: {}", peer, msg.trim());
 
-				// Create a response string by adding "Server echo: " before the client's message
-				let response = format!("Server echo: {}", msg);
-				// Convert the response string to bytes and send it back to the client
-				stream.write_all(response.as_bytes()).unwrap();
-			},
-			// If reading failed, 'e' contains the error details
-			Err(e) => {
-				// Print an error message with the client's address and error details
-				println!("Error reading from {}: {}", peer, e);
-				// Exit the loop because the connection has an error
-				break;
-			},
-		}
-	}
+                // Create a response string by adding "Server echo: " before the client's message
+                let response = format!("Server echo: {}", msg);
+                // Convert the response string to bytes and send it back to the client
+                stream.write_all(response.as_bytes()).unwrap();
+            },
+            // If reading failed, 'e' contains the error details
+            Err(e) => {
+                // Print an error message with the client's address and error details
+                println!("Error reading from {}: {}", peer, e);
+                // Exit the loop because the connection has an error
+                break;
+            },
+        }
+    }
 }

@@ -6,81 +6,82 @@
 // Import the io module's prelude which brings common input/output traits into scope
 use std::io::prelude::*;
 // Import TcpListener to create a server and TcpStream to handle connections
-use std::net::{TcpListener, TcpStream};
+use std::net::TcpListener;
+use std::net::TcpStream;
 // Import thread module to create multiple threads for handling concurrent connections
 use std::thread;
 
 // Main function where the program starts
 fn main() {
-	// Create a TCP listener that binds to localhost (127.0.0.1) on port 8080
-	// unwrap() will panic if binding fails (e.g., if port is already in use)
-	let listener = TcpListener::bind("127.0.0.1:8080").unwrap();
-	// Print a message to the console showing the server is running
-	println!("Server running on http://127.0.0.1:8080");
+    // Create a TCP listener that binds to localhost (127.0.0.1) on port 8080
+    // unwrap() will panic if binding fails (e.g., if port is already in use)
+    let listener = TcpListener::bind("127.0.0.1:8080").unwrap();
+    // Print a message to the console showing the server is running
+    println!("Server running on http://127.0.0.1:8080");
 
-	// Loop through all incoming connection attempts
-	for stream in listener.incoming() {
-		// Extract the TcpStream from the Result, panic if there's an error
-		let stream = stream.unwrap();
+    // Loop through all incoming connection attempts
+    for stream in listener.incoming() {
+        // Extract the TcpStream from the Result, panic if there's an error
+        let stream = stream.unwrap();
 
-		// Create a new thread to handle this client connection
-		// This allows the server to handle multiple clients at the same time
-		thread::spawn(|| {
-			// Call the function that will process this connection
-			handle_connection(stream);
-		});
-	}
+        // Create a new thread to handle this client connection
+        // This allows the server to handle multiple clients at the same time
+        thread::spawn(|| {
+            // Call the function that will process this connection
+            handle_connection(stream);
+        });
+    }
 }
 
 // Function that handles a single HTTP connection
 // Takes a mutable TcpStream so we can read from and write to it
 fn handle_connection(mut stream: TcpStream) {
-	// Create a buffer array of 1024 bytes, initialized with zeros
-	// This will store the incoming HTTP request data
-	let mut buffer = [0; 1024];
-	// Read data from the stream into the buffer
-	// Store the number of bytes actually read (may be less than buffer size)
-	let bytes_read = stream.read(&mut buffer).unwrap();
+    // Create a buffer array of 1024 bytes, initialized with zeros
+    // This will store the incoming HTTP request data
+    let mut buffer = [0; 1024];
+    // Read data from the stream into the buffer
+    // Store the number of bytes actually read (may be less than buffer size)
+    let bytes_read = stream.read(&mut buffer).unwrap();
 
-	// Convert only the bytes we actually read into a UTF-8 string
-	// from_utf8_lossy replaces invalid UTF-8 sequences with �
-	let request = String::from_utf8_lossy(&buffer[..bytes_read]);
-	// Get the first line of the HTTP request (e.g., "GET / HTTP/1.1")
-	// unwrap_or("") returns an empty string if there are no lines
-	let request_line = request.lines().next().unwrap_or("");
+    // Convert only the bytes we actually read into a UTF-8 string
+    // from_utf8_lossy replaces invalid UTF-8 sequences with �
+    let request = String::from_utf8_lossy(&buffer[..bytes_read]);
+    // Get the first line of the HTTP request (e.g., "GET / HTTP/1.1")
+    // unwrap_or("") returns an empty string if there are no lines
+    let request_line = request.lines().next().unwrap_or("");
 
-	// Match the request line to determine what response to send
-	// Returns a tuple of (status code, HTML/JSON content)
-	let (status, content) = match &request_line {
-		// If the request starts with "GET / ", it's a request for the home page
-		s if s.starts_with("GET / ") => {
-			// Return 200 OK status and simple text response
-			("200 OK", "Hello from Rust HTTP Server!")
-		},
-		// If the request starts with "GET /api ", it's a request for the API endpoint
-		s if s.starts_with("GET /api ") => {
-			// Return 200 OK status and JSON content for the API response
-			("200 OK", r#"{"message": "Hello from API", "status": "success"}"#)
-		},
-		// For any other request path
-		_ => {
-			// Return 404 NOT FOUND status and simple error message
-			("404 NOT FOUND", "404 - Page Not Found")
-		},
-	};
+    // Match the request line to determine what response to send
+    // Returns a tuple of (status code, HTML/JSON content)
+    let (status, content) = match &request_line {
+        // If the request starts with "GET / ", it's a request for the home page
+        s if s.starts_with("GET / ") => {
+            // Return 200 OK status and simple text response
+            ("200 OK", "Hello from Rust HTTP Server!")
+        },
+        // If the request starts with "GET /api ", it's a request for the API endpoint
+        s if s.starts_with("GET /api ") => {
+            // Return 200 OK status and JSON content for the API response
+            ("200 OK", r#"{"message": "Hello from API", "status": "success"}"#)
+        },
+        // For any other request path
+        _ => {
+            // Return 404 NOT FOUND status and simple error message
+            ("404 NOT FOUND", "404 - Page Not Found")
+        },
+    };
 
-	// Build the HTTP response string using format macro
-	// Includes status line, Content-Length header, blank line, and content body
-	let response = format!(
-		"HTTP/1.1 {}\r\nContent-Length: {}\r\n\r\n{}",
-		status,        // Insert the status code (e.g., "200 OK")
-		content.len(), // Insert the length of the content in bytes
-		content        // Insert the actual HTML or JSON content
-	);
+    // Build the HTTP response string using format macro
+    // Includes status line, Content-Length header, blank line, and content body
+    let response = format!(
+        "HTTP/1.1 {}\r\nContent-Length: {}\r\n\r\n{}",
+        status,        // Insert the status code (e.g., "200 OK")
+        content.len(), // Insert the length of the content in bytes
+        content        // Insert the actual HTML or JSON content
+    );
 
-	// Convert the response string to bytes and write all of it to the stream
-	// This sends the response back to the client's browser
-	stream.write_all(response.as_bytes()).unwrap();
-	// Flush the stream to ensure all data is sent immediately
-	stream.flush().unwrap();
+    // Convert the response string to bytes and write all of it to the stream
+    // This sends the response back to the client's browser
+    stream.write_all(response.as_bytes()).unwrap();
+    // Flush the stream to ensure all data is sent immediately
+    stream.flush().unwrap();
 }

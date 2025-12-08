@@ -3,7 +3,9 @@
 //! [dependencies]
 //! ```
 
-// **Problem:** Given an array of stock prices where `prices[i]` is the price on day `i`, find the maximum profit from buying on one day and selling on a future day. Return 0 if no profit is possible.
+// **Problem:** Given an array of stock prices where `prices[i]` is the price on day `i`, find the
+// maximum profit from buying on one day and selling on a future day. Return 0 if no profit is
+// possible.
 
 use std::i32;
 
@@ -17,7 +19,7 @@ fn maximum_profit(prices: Vec<i32>) -> i32 {
         max_profit = max_profit.max(price - min_price);
     }
 
-    max_profit 
+    max_profit
 }
 
 fn main() {

@@ -53,12 +53,7 @@ struct BicycleBuilder {
 macro_rules! with_str {
     ($name:ident, $func:ident) => {
         pub fn $func(self, $name: &str) -> Self {
-            Self {
-                bicycle: Bicycle {
-                    $name: $name.into(),
-                    ..self.bicycle
-                },
-            }
+            Self { bicycle: Bicycle { $name: $name.into(), ..self.bicycle } }
         }
     };
 }
@@ -66,12 +61,7 @@ macro_rules! with_str {
 macro_rules! with {
     ($name:ident, $func:ident, $type:ty) => {
         pub fn $func(self, $name: $type) -> Self {
-            Self {
-                bicycle: Bicycle {
-                    $name,
-                    ..self.bicycle
-                },
-            }
+            Self { bicycle: Bicycle { $name, ..self.bicycle } }
         }
     };
 }
@@ -115,10 +105,7 @@ fn main() {
         color: "red".into(),
     };
     println!("{:?}", bicycle1);
-    let bicycle2 = Bicycle {
-        size: 58,
-        ..bicycle1
-    };
+    let bicycle2 = Bicycle { size: 58, ..bicycle1 };
     println!("{:?}", bicycle2);
     // println!("{:?}", bicycle1); error! value used after move
 }

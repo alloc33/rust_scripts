@@ -3,28 +3,24 @@
 //! [dependencies]
 //! ```
 
-use std::collections::{HashSet, VecDeque};
+use std::collections::HashSet;
+use std::collections::VecDeque;
 
 fn shortest_path(maze: &[Vec<char>], start: (usize, usize), end: (usize, usize)) -> i32 {
     // Get maze dimensions for boundary checking
     let rows = maze.len();
     let cols = maze[0].len();
-
     // QUEUE: Stores positions to visit next, in order (FIFO = First In First Out)
     // BFS uses a queue to explore level-by-level (distance 0, then 1, then 2, etc.)
     let mut queue = VecDeque::new();
-
     // VISITED SET: Tracks which positions we've already seen
     // Prevents revisiting the same cell and getting stuck in loops
     let mut visited = HashSet::new();
-
     // Add starting position to queue with distance 0
     // Format: (row, column, distance_from_start)
     queue.push_back((start.0, start.1, 0));
-
     // Mark start as visited immediately to avoid revisiting it
     visited.insert((start.0, start.1));
-
     // DIRECTIONS: All 4 possible moves (right, down, left, up)
     // (row_change, column_change)
     let directions = [
@@ -33,7 +29,6 @@ fn shortest_path(maze: &[Vec<char>], start: (usize, usize), end: (usize, usize))
         (0, -1), // left: same row, -1 column
         (-1, 0), // up: -1 row, same column
     ];
-
     // BFS MAIN LOOP: Process each position in the queue
     // pop_front() gets the OLDEST item (FIFO behavior)
     // This ensures we explore distance 0 positions, then distance 1, then distance 2, etc.
@@ -43,20 +38,17 @@ fn shortest_path(maze: &[Vec<char>], start: (usize, usize), end: (usize, usize))
         if (row, col) == end {
             return dist;
         }
-
         // EXPLORE NEIGHBORS: Try moving in all 4 directions
         for (dr, dc) in directions.iter() {
             // Calculate new position
             // Use i32 to handle negative numbers (going left or up)
             let new_row = row as i32 + dr;
             let new_col = col as i32 + dc;
-
             // BOUNDARY CHECK: Make sure new position is inside the maze
             if new_row >= 0 && new_row < rows as i32 && new_col >= 0 && new_col < cols as i32 {
                 // Convert back to usize for array indexing
                 let nr = new_row as usize;
                 let nc = new_col as usize;
-
                 // VALIDITY CHECK: Can we actually move to this cell?
                 // 1. maze[nr][nc] != '#' → not a wall (assume '#' = wall, '.' = open)
                 // 2. !visited.contains() → haven't been here before
@@ -64,7 +56,6 @@ fn shortest_path(maze: &[Vec<char>], start: (usize, usize), end: (usize, usize))
                     // Mark as visited NOW (before adding to queue)
                     // This prevents adding the same cell multiple times
                     visited.insert((nr, nc));
-
                     // Add to BACK of queue with distance + 1
                     // This cell is one step further from start than current cell
                     queue.push_back((nr, nc, dist + 1));
@@ -72,81 +63,57 @@ fn shortest_path(maze: &[Vec<char>], start: (usize, usize), end: (usize, usize))
             }
         }
     }
-
     // FAILURE: Queue is empty and we never found the end
     // This means there's no valid path from start to end
     return -1;
 }
 
 fn main() {
-    println!("=== BFS Shortest Path - Test Cases ===\n");
-
-    // TEST 1: Simple path
-    println!("Test 1: Simple 3x3 maze");
+    // Test 1: Simple straight path
+    #[rustfmt::skip]
     let maze1 = vec![
-        vec!['S', '.', '.'],
-        vec!['.', '#', '.'],
-        vec!['.', '.', 'E'],
+        vec!['.', '.', '.'],
+        vec!['.', '.', '.'],
+        vec!['.', '.', '.']
     ];
-    print_maze(&maze1);
-    let result1 = shortest_path(&maze1, (0, 0), (2, 2));
-    println!("Result: {} steps\n", result1);
-    println!("Expected: 4 steps (S→right→down→right→E)\n");
+    assert_eq!(shortest_path(&maze1, (0, 0), (2, 2)), 4);
 
-    // TEST 2: Wall blocking direct path
-    println!("Test 2: Maze with blocking wall");
+    // Test 2: Path with walls
+    #[rustfmt::skip]
     let maze2 = vec![
-        vec!['S', '.', '.', '.'],
-        vec!['.', '#', '#', '.'],
-        vec!['.', '.', '.', 'E'],
+        vec!['.', '#', '.'],
+        vec!['.', '#', '.'],
+        vec!['.', '.', '.']
     ];
-    print_maze(&maze2);
-    let result2 = shortest_path(&maze2, (0, 0), (2, 3));
-    println!("Result: {} steps\n", result2);
-    println!("Expected: 6 steps (must go around the wall)\n");
+    assert_eq!(shortest_path(&maze2, (0, 0), (0, 2)), 6);
 
-    // TEST 3: No path exists
-    println!("Test 3: No path (completely blocked)");
+    // Test 3: No path (blocked)
+    #[rustfmt::skip]
     let maze3 = vec![
-        vec!['S', '.', '#'],
-        vec!['#', '#', '#'],
-        vec!['.', '.', 'E'],
+        vec!['.', '#', '.'],
+        vec!['.', '#', '.'],
+        vec!['.', '#', '.']
     ];
-    print_maze(&maze3);
-    let result3 = shortest_path(&maze3, (0, 0), (2, 2));
-    println!("Result: {} steps\n", result3);
-    println!("Expected: -1 (no path exists)\n");
+    assert_eq!(shortest_path(&maze3, (0, 0), (0, 2)), -1);
 
-    // TEST 4: Start = End
-    println!("Test 4: Start equals end");
-    let maze4 = vec![vec!['S', '.'], vec!['.', '.']];
-    print_maze(&maze4);
-    let result4 = shortest_path(&maze4, (0, 0), (0, 0));
-    println!("Result: {} steps\n", result4);
-    println!("Expected: 0 steps (already at destination)\n");
+    // Test 4: Start equals end
+    #[rustfmt::skip]
+    let maze4 = vec![
+        vec!['.', '.', '.'],
+        vec!['.', '.', '.']
+    ];
+    assert_eq!(shortest_path(&maze4, (0, 0), (0, 0)), 0);
 
-    // TEST 5: Larger maze
-    println!("Test 5: Larger 5x5 maze");
+    // Test 5: Longer maze
+    #[rustfmt::skip]
     let maze5 = vec![
-        vec!['S', '.', '#', '.', '.'],
-        vec!['.', '.', '#', '.', '.'],
-        vec!['#', '.', '.', '.', '#'],
-        vec!['.', '.', '#', '.', '.'],
-        vec!['.', '.', '.', '.', 'E'],
+        vec!['.', '.', '.', '#', '.'],
+        vec!['#', '#', '.', '#', '.'],
+        vec!['.', '.', '.', '.', '.'],
+        vec!['.', '#', '#', '#', '.'],
+        vec!['.', '.', '.', '.', '.']
     ];
-    print_maze(&maze5);
-    let result5 = shortest_path(&maze5, (0, 0), (4, 4));
-    println!("Result: {} steps\n", result5);
-    println!("Expected: 8 steps (optimal path around walls)\n");
-}
+    assert_eq!(shortest_path(&maze5, (0, 0), (4, 4)), 8);
 
-// Helper function to visualize the maze
-fn print_maze(maze: &[Vec<char>]) {
-    for row in maze {
-        for &cell in row {
-            print!("{} ", cell);
-        }
-        println!();
-    }
-    println!();
+    println!("All tests passed!");
 }

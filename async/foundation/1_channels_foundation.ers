@@ -8,219 +8,220 @@ use std::time::Duration;
 
 // Pattern 1: PRODUCER-CONSUMER (most common)
 fn producer_consumer_example() {
-	println!("=== Pattern 1: Producer-Consumer ===\n");
+    println!("=== Pattern 1: Producer-Consumer ===\n");
 
-	// Create channel: tx (sender), rx (receiver)
-	// mpsc = Multiple Producer, Single Consumer
-	let (tx, rx) = mpsc::channel();
+    // Create channel: tx (sender), rx (receiver)
+    // mpsc = Multiple Producer, Single Consumer
+    let (tx, rx) = mpsc::channel();
 
-	// Producer thread
-	thread::spawn(move || {
-		// Send 5 messages into the channel
-		for i in 1..=5 {
-			println!("Producing: {}", i);
-			tx.send(i).unwrap(); // Send value through channel
-			thread::sleep(Duration::from_millis(100));
-		}
-		// tx dropped here = channel closes automatically
-		// This signals receiver that no more messages will come
-	});
+    // Producer thread
+    thread::spawn(move || {
+        // Send 5 messages into the channel
+        for i in 1..=5 {
+            println!("Producing: {}", i);
+            tx.send(i).unwrap(); // Send value through channel
+            thread::sleep(Duration::from_millis(100));
+        }
+        // tx dropped here = channel closes automatically
+        // This signals receiver that no more messages will come
+    });
 
-	// Consumer (main thread)
-	// Loop blocks until next message arrives
-	// Exits when channel is closed (tx dropped)
-	for received in rx {
-		println!("  Consumed: {}", received);
-	}
-	println!("Channel closed!\n");
+    // Consumer (main thread)
+    // Loop blocks until next message arrives
+    // Exits when channel is closed (tx dropped)
+    for received in rx {
+        println!("  Consumed: {}", received);
+    }
+    println!("Channel closed!\n");
 }
 
 // Pattern 2: MULTIPLE PRODUCERS (clone the sender)
 fn multiple_producers_example() {
-	println!("=== Pattern 2: Multiple Producers ===\n");
+    println!("=== Pattern 2: Multiple Producers ===\n");
 
-	let (tx, rx) = mpsc::channel();
+    let (tx, rx) = mpsc::channel();
 
-	// Spawn 3 threads, each gets its own clone of the sender
-	for id in 0..3 {
-		let tx = tx.clone(); // Clone sender for each thread
-		thread::spawn(move || {
-			// Each thread sends independently through its tx clone
-			tx.send(format!("Message from worker {}", id)).unwrap();
-		});
-	}
-	drop(tx); // IMPORTANT: Drop original sender so channel can close
-		   // Without this, rx.iter() would wait forever!
+    // Spawn 3 threads, each gets its own clone of the sender
+    for id in 0..3 {
+        let tx = tx.clone(); // Clone sender for each thread
+        thread::spawn(move || {
+            // Each thread sends independently through its tx clone
+            tx.send(format!("Message from worker {}", id)).unwrap();
+        });
+    }
+    drop(tx); // IMPORTANT: Drop original sender so channel can close
+    // Without this, rx.iter() would wait forever!
 
-	// Receive from all producers
-	// Order is non-deterministic (depends on thread scheduling)
-	for msg in rx {
-		println!("  Received: {}", msg);
-	}
-	println!();
+    // Receive from all producers
+    // Order is non-deterministic (depends on thread scheduling)
+    for msg in rx {
+        println!("  Received: {}", msg);
+    }
+    println!();
 }
 
 // Pattern 3: REQUEST-RESPONSE (with oneshot channel)
 fn request_response_example() {
-	println!("=== Pattern 3: Request-Response ===\n");
+    println!("=== Pattern 3: Request-Response ===\n");
 
-	#[derive(Debug)]
-	enum Request {
-		// Each variant carries a "return address" (reply channel)
-		Add(i32, i32, mpsc::Sender<i32>), // Includes return channel!
-		Multiply(i32, i32, mpsc::Sender<i32>),
-	}
+    #[derive(Debug)]
+    enum Request {
+        // Each variant carries a "return address" (reply channel)
+        Add(i32, i32, mpsc::Sender<i32>), // Includes return channel!
+        Multiply(i32, i32, mpsc::Sender<i32>),
+    }
 
-	// Main channel: client → worker
-	let (tx, rx) = mpsc::channel();
+    // Main channel: client → worker
+    let (tx, rx) = mpsc::channel();
 
-	// Worker thread: processes requests and sends replies
-	thread::spawn(move || {
-		for req in rx {
-			match req {
-				Request::Add(a, b, reply) => {
-					// Compute result and send back through reply channel
-					reply.send(a + b).unwrap();
-				},
-				Request::Multiply(a, b, reply) => {
-					reply.send(a * b).unwrap();
-				},
-			}
-		}
-	});
+    // Worker thread: processes requests and sends replies
+    thread::spawn(move || {
+        for req in rx {
+            match req {
+                Request::Add(a, b, reply) => {
+                    // Compute result and send back through reply channel
+                    reply.send(a + b).unwrap();
+                },
+                Request::Multiply(a, b, reply) => {
+                    reply.send(a * b).unwrap();
+                },
+            }
+        }
+    });
 
-	// Send requests and get responses
-	// Create a reply channel for worker to send results back
-	let (reply_tx, reply_rx) = mpsc::channel();
+    // Send requests and get responses
+    // Create a reply channel for worker to send results back
+    let (reply_tx, reply_rx) = mpsc::channel();
 
-	// Send request with reply channel embedded
-	tx.send(Request::Add(5, 3, reply_tx.clone())).unwrap();
-	// Block until worker sends result back
-	println!("  5 + 3 = {}", reply_rx.recv().unwrap());
+    // Send request with reply channel embedded
+    tx.send(Request::Add(5, 3, reply_tx.clone())).unwrap();
+    // Block until worker sends result back
+    println!("  5 + 3 = {}", reply_rx.recv().unwrap());
 
-	tx.send(Request::Multiply(4, 7, reply_tx)).unwrap();
-	println!("  4 * 7 = {}", reply_rx.recv().unwrap());
-	println!();
+    tx.send(Request::Multiply(4, 7, reply_tx)).unwrap();
+    println!("  4 * 7 = {}", reply_rx.recv().unwrap());
+    println!();
 }
 
 // Pattern 4: FAN-OUT (distribute work) - WRONG vs RIGHT way
 fn fan_out_example() {
-	println!("=== Pattern 4: Fan-Out (Work Distribution) ===\n");
+    println!("=== Pattern 4: Fan-Out (Work Distribution) ===\n");
 
-	// WRONG: Can't clone Receiver!
-	// let (work_tx, work_rx) = mpsc::channel();
-	// let rx2 = work_rx.clone(); // ERROR: Receiver is NOT Clone
-	// mpsc = Multiple Producer, SINGLE Consumer (only tx is Clone)
+    // WRONG: Can't clone Receiver!
+    // let (work_tx, work_rx) = mpsc::channel();
+    // let rx2 = work_rx.clone(); // ERROR: Receiver is NOT Clone
+    // mpsc = Multiple Producer, SINGLE Consumer (only tx is Clone)
 
-	// RIGHT: Multiple channels (separate work streams)
-	// Each worker gets its own dedicated channel
-	let (tx1, rx1) = mpsc::channel();
-	let (tx2, rx2) = mpsc::channel();
+    // RIGHT: Multiple channels (separate work streams)
+    // Each worker gets its own dedicated channel
+    let (tx1, rx1) = mpsc::channel();
+    let (tx2, rx2) = mpsc::channel();
 
-	// Worker 1: dedicated to rx1
-	thread::spawn(move || {
-		for msg in rx1 {
-			println!("  Worker 1 got: {}", msg);
-		}
-	});
+    // Worker 1: dedicated to rx1
+    thread::spawn(move || {
+        for msg in rx1 {
+            println!("  Worker 1 got: {}", msg);
+        }
+    });
 
-	// Worker 2: dedicated to rx2
-	thread::spawn(move || {
-		for msg in rx2 {
-			println!("  Worker 2 got: {}", msg);
-		}
-	});
+    // Worker 2: dedicated to rx2
+    thread::spawn(move || {
+        for msg in rx2 {
+            println!("  Worker 2 got: {}", msg);
+        }
+    });
 
-	// Distribute work manually across channels
-	// You control which worker gets which task
-	tx1.send("Task A").unwrap();
-	tx2.send("Task B").unwrap();
-	tx1.send("Task C").unwrap();
+    // Distribute work manually across channels
+    // You control which worker gets which task
+    tx1.send("Task A").unwrap();
+    tx2.send("Task B").unwrap();
+    tx1.send("Task C").unwrap();
 
-	thread::sleep(Duration::from_millis(100));
+    thread::sleep(Duration::from_millis(100));
 
-	println!("\n  Note: For true fan-out (work stealing), use crossbeam-channel");
-	println!("  Or build a worker pool with sync_channel (see Pattern 5)\n");
+    println!("\n  Note: For true fan-out (work stealing), use crossbeam-channel");
+    println!("  Or build a worker pool with sync_channel (see Pattern 5)\n");
 }
 
 // Pattern 5: BOUNDED CHANNEL (backpressure)
 fn bounded_channel_example() {
-	println!("=== Pattern 5: Bounded Channel (Backpressure) ===\n");
+    println!("=== Pattern 5: Bounded Channel (Backpressure) ===\n");
 
-	// sync_channel = bounded buffer (prevents unbounded memory growth)
-	let (tx, rx) = mpsc::sync_channel(2); // Buffer size = 2
+    // sync_channel = bounded buffer (prevents unbounded memory growth)
+    let (tx, rx) = mpsc::sync_channel(2); // Buffer size = 2
 
-	thread::spawn(move || {
-		for i in 1..=5 {
-			println!("Sending {}...", i);
-			// BLOCKS here when buffer is full!
-			// Sender waits until receiver consumes something
-			tx.send(i).unwrap();
-			println!("  Sent {}", i);
-		}
-	});
+    thread::spawn(move || {
+        for i in 1..=5 {
+            println!("Sending {}...", i);
+            // BLOCKS here when buffer is full!
+            // Sender waits until receiver consumes something
+            tx.send(i).unwrap();
+            println!("  Sent {}", i);
+        }
+    });
 
-	// Wait a bit to let sender fill the buffer
-	thread::sleep(Duration::from_millis(500));
+    // Wait a bit to let sender fill the buffer
+    thread::sleep(Duration::from_millis(500));
 
-	// Slow consumer
-	for received in rx {
-		println!("  Processing: {}", received);
-		thread::sleep(Duration::from_millis(200)); // Simulates slow processing
-		                                     // Each recv() unblocks the sender to send one more item
-	}
-	println!();
+    // Slow consumer
+    for received in rx {
+        println!("  Processing: {}", received);
+        thread::sleep(Duration::from_millis(200)); // Simulates slow processing
+        // Each recv() unblocks the sender to send one
+        // more item
+    }
+    println!();
 }
 
 // Pattern 6: SELECT-LIKE (try_recv for non-blocking)
 fn non_blocking_example() {
-	println!("=== Pattern 6: Non-Blocking Receive ===\n");
+    println!("=== Pattern 6: Non-Blocking Receive ===\n");
 
-	let (tx, rx) = mpsc::channel();
+    let (tx, rx) = mpsc::channel();
 
-	thread::spawn(move || {
-		thread::sleep(Duration::from_millis(100));
-		tx.send("delayed message").unwrap();
-	});
+    thread::spawn(move || {
+        thread::sleep(Duration::from_millis(100));
+        tx.send("delayed message").unwrap();
+    });
 
-	// Try to receive without blocking
-	// Useful when you want to do other work while waiting
-	for _ in 0..3 {
-		match rx.try_recv() {
-			Ok(msg) => println!("  Got: {}", msg),
-			// Channel is empty but still open
-			Err(mpsc::TryRecvError::Empty) => {
-				println!("  No message yet...");
-				thread::sleep(Duration::from_millis(50));
-				// Could do other work here instead of sleeping
-			},
-			// Channel closed (all senders dropped)
-			Err(mpsc::TryRecvError::Disconnected) => break,
-		}
-	}
-	println!();
+    // Try to receive without blocking
+    // Useful when you want to do other work while waiting
+    for _ in 0..3 {
+        match rx.try_recv() {
+            Ok(msg) => println!("  Got: {}", msg),
+            // Channel is empty but still open
+            Err(mpsc::TryRecvError::Empty) => {
+                println!("  No message yet...");
+                thread::sleep(Duration::from_millis(50));
+                // Could do other work here instead of sleeping
+            },
+            // Channel closed (all senders dropped)
+            Err(mpsc::TryRecvError::Disconnected) => break,
+        }
+    }
+    println!();
 }
 
 fn main() {
-	println!("🔄 CHANNELS - THE RUST CONCURRENCY FOUNDATION\n");
-	println!("{}\n", "=".repeat(50));
+    println!("🔄 CHANNELS - THE RUST CONCURRENCY FOUNDATION\n");
+    println!("{}\n", "=".repeat(50));
 
-	producer_consumer_example();
-	println!("{}\n", "=".repeat(50));
+    producer_consumer_example();
+    println!("{}\n", "=".repeat(50));
 
-	multiple_producers_example();
-	println!("{}\n", "=".repeat(50));
+    multiple_producers_example();
+    println!("{}\n", "=".repeat(50));
 
-	request_response_example();
-	println!("{}\n", "=".repeat(50));
+    request_response_example();
+    println!("{}\n", "=".repeat(50));
 
-	fan_out_example();
-	println!("{}\n", "=".repeat(50));
+    fan_out_example();
+    println!("{}\n", "=".repeat(50));
 
-	bounded_channel_example();
-	println!("{}\n", "=".repeat(50));
+    bounded_channel_example();
+    println!("{}\n", "=".repeat(50));
 
-	non_blocking_example();
+    non_blocking_example();
 }
 
 /*

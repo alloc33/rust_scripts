@@ -7,47 +7,49 @@
 
 use std::collections::VecDeque;
 
-// You are given an array of integers nums, there is a sliding window of size k which is moving from the very left of the array to the very right. You can only see the k numbers in the window. Each time the sliding window moves right by one position.
+// You are given an array of integers nums, there is a sliding window of size k which is moving from
+// the very left of the array to the very right. You can only see the k numbers in the window. Each
+// time the sliding window moves right by one position.
 
 // Return the max sliding window.
 
 pub fn max_sliding_window(nums: Vec<i32>, k: i32) -> Vec<i32> {
-	let k = k as usize;
-	let mut result = Vec::with_capacity(nums.len().saturating_sub(k - 1));
-	let mut deque: VecDeque<usize> = VecDeque::new();
+    let k = k as usize;
+    let mut result = Vec::with_capacity(nums.len().saturating_sub(k - 1));
+    let mut deque: VecDeque<usize> = VecDeque::new();
 
-	for (i, &num) in nums.iter().enumerate() {
-		// Remove indices with smaller values - they're dominated
-		while let Some(&j) = deque.back()
-			&& nums[j] <= num
-		{
-			deque.pop_back();
-		}
+    for (i, &num) in nums.iter().enumerate() {
+        // Remove indices with smaller values - they're dominated
+        while let Some(&j) = deque.back() &&
+            nums[j] <= num
+        {
+            deque.pop_back();
+        }
 
-		// Remove indices outside window
-		while let Some(&j) = deque.front()
-			&& j + k <= i
-		{
-			deque.pop_front();
-		}
+        // Remove indices outside window
+        while let Some(&j) = deque.front() &&
+            j + k <= i
+        {
+            deque.pop_front();
+        }
 
-		deque.push_back(i);
+        deque.push_back(i);
 
-		// Start recording once first window is complete
-		if i >= k - 1 {
-			result.push(nums[deque[0]]);
-		}
-	}
+        // Start recording once first window is complete
+        if i >= k - 1 {
+            result.push(nums[deque[0]]);
+        }
+    }
 
-	result
+    result
 }
 
 fn main() {
-	assert_eq!(max_sliding_window(vec![1, 3, -1, -3, 5, 3, 6, 7], 3), vec![3, 3, 5, 5, 6, 7]);
-	assert_eq!(max_sliding_window(vec![1], 1), vec![1]);
-	assert_eq!(max_sliding_window(vec![1, -1], 1), vec![1, -1]);
-	assert_eq!(max_sliding_window(vec![9, 11], 2), vec![11]);
-	assert_eq!(max_sliding_window(vec![4, -2], 2), vec![4]);
+    assert_eq!(max_sliding_window(vec![1, 3, -1, -3, 5, 3, 6, 7], 3), vec![3, 3, 5, 5, 6, 7]);
+    assert_eq!(max_sliding_window(vec![1], 1), vec![1]);
+    assert_eq!(max_sliding_window(vec![1, -1], 1), vec![1, -1]);
+    assert_eq!(max_sliding_window(vec![9, 11], 2), vec![11]);
+    assert_eq!(max_sliding_window(vec![4, -2], 2), vec![4]);
 
-	println!("All tests passed!");
+    println!("All tests passed!");
 }

@@ -8,7 +8,7 @@ use std::hash::Hash;
 
 /// A generic in-memory key-value store
 #[derive(Debug)]
-pub struct KVStore<K, V> 
+pub struct KVStore<K, V>
 where
     K: Eq + Hash + Clone,
     V: Clone + PartialEq,
@@ -23,9 +23,7 @@ where
 {
     /// Creates a new empty KVStore
     pub fn new() -> Self {
-        KVStore {
-            store: HashMap::new(),
-        }
+        KVStore { store: HashMap::new() }
     }
 
     /// Sets a key-value pair in the store
@@ -48,10 +46,7 @@ where
 
     /// Counts the number of keys that have the given value
     pub fn count(&self, value: &V) -> usize {
-        self.store
-            .values()
-            .filter(|v| *v == value)
-            .count()
+        self.store.values().filter(|v| *v == value).count()
     }
 
     /// Returns the number of key-value pairs in the store
@@ -114,59 +109,59 @@ where
 
 fn main() {
     println!("=== String-based KVStore (Original Requirements) ===\n");
-    
+
     // Using the convenience methods for String store
     let mut store = KVStore::<String, String>::new();
-    
+
     store.set_str("a", "foo");
     store.set_str("b", "foo");
     store.set_str("c", "bar");
-    
+
     println!("After setting a='foo', b='foo', c='bar':");
     println!("  get('a') = {:?}", store.get_str("a"));
     println!("  count('foo') = {}", store.count_str("foo"));
     println!("  count('bar') = {}", store.count_str("bar"));
-    
+
     store.delete_str("a");
     println!("\nAfter deleting 'a':");
     println!("  get('a') = {:?}", store.get_str("a"));
     println!("  count('foo') = {}", store.count_str("foo"));
-    
+
     println!("\n=== Generic KVStore with integers ===\n");
-    
+
     let mut int_store = KVStore::<i32, i32>::new();
-    
+
     int_store.set(1, 100);
     int_store.set(2, 100);
     int_store.set(3, 200);
     int_store.set(4, 100);
-    
+
     println!("Integer store:");
     println!("  get(1) = {:?}", int_store.get(&1));
     println!("  count(100) = {}", int_store.count(&100));
     println!("  count(200) = {}", int_store.count(&200));
     println!("  keys with value 100: {:?}", int_store.keys_with_value(&100));
-    
+
     println!("\n=== Generic KVStore with custom types ===\n");
-    
+
     #[derive(Debug, Clone, PartialEq, Eq, Hash)]
     struct UserId(u64);
-    
+
     #[derive(Debug, Clone, PartialEq)]
     struct UserData {
         name: String,
         age: u32,
     }
-    
+
     let mut user_store = KVStore::<UserId, UserData>::new();
-    
+
     let user1 = UserData { name: "Alice".to_string(), age: 30 };
     let user2 = UserData { name: "Bob".to_string(), age: 30 };
-    
+
     user_store.set(UserId(1), user1.clone());
     user_store.set(UserId(2), user2.clone());
     user_store.set(UserId(3), user1.clone());
-    
+
     println!("Custom type store:");
     println!("  Users with same data as user1: {}", user_store.count(&user1));
     println!("  Total entries: {}", user_store.len());
@@ -198,16 +193,16 @@ mod tests {
     #[test]
     fn test_generic_with_integers() {
         let mut store = KVStore::<i32, i32>::new();
-        
+
         store.set(1, 10);
         store.set(2, 10);
         store.set(3, 20);
-        
+
         assert_eq!(store.get(&1), Some(&10));
         assert_eq!(store.count(&10), 2);
         assert_eq!(store.count(&20), 1);
         assert_eq!(store.count(&30), 0);
-        
+
         assert_eq!(store.delete(&1), Some(10));
         assert_eq!(store.delete(&999), None);
     }
@@ -215,15 +210,15 @@ mod tests {
     #[test]
     fn test_keys_with_value() {
         let mut store = KVStore::<String, i32>::new();
-        
+
         store.set("a".to_string(), 1);
         store.set("b".to_string(), 2);
         store.set("c".to_string(), 1);
         store.set("d".to_string(), 1);
-        
+
         let mut keys = store.keys_with_value(&1);
         keys.sort(); // Sort for consistent test results
-        
+
         assert_eq!(keys.len(), 3);
         assert!(keys.contains(&&"a".to_string()));
         assert!(keys.contains(&&"c".to_string()));
@@ -233,14 +228,14 @@ mod tests {
     #[test]
     fn test_store_operations() {
         let mut store = KVStore::<String, String>::new();
-        
+
         assert!(store.is_empty());
         assert_eq!(store.len(), 0);
-        
+
         store.set("key".to_string(), "value".to_string());
         assert!(!store.is_empty());
         assert_eq!(store.len(), 1);
-        
+
         store.clear();
         assert!(store.is_empty());
         assert_eq!(store.len(), 0);
@@ -249,11 +244,11 @@ mod tests {
     #[test]
     fn test_update_changes_count() {
         let mut store = KVStore::<i32, String>::new();
-        
+
         store.set(1, "old".to_string());
         store.set(2, "old".to_string());
         assert_eq!(store.count(&"old".to_string()), 2);
-        
+
         store.set(1, "new".to_string());
         assert_eq!(store.count(&"old".to_string()), 1);
         assert_eq!(store.count(&"new".to_string()), 1);

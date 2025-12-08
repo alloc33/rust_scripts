@@ -27,14 +27,14 @@ fn reverse_string_2(s: &str) -> String {
     // This gives us mutable access to swap elements
     let mut chars: Vec<char> = s.chars().collect();
     let len = chars.len();
-    
+
     // Iterate only through the first half of the string
     for i in 0..len / 2 {
         // Swap character at position i with its mirror position
         // i=0 swaps with len-1, i=1 swaps with len-2, etc.
         chars.swap(i, len - 1 - i);
     }
-    
+
     // Convert the vector of chars back into a String
     chars.into_iter().collect()
 }

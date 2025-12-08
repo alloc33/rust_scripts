@@ -3,8 +3,9 @@
 //! [dependencies]
 //! ```
 
-// Given an integer array nums, return all the triplets [nums[i], nums[j], nums[k]] such that i != j, i != k, and j != k, and nums[i] + nums[j] + nums[k] == 0.
-// Notice that the solution set must not contain duplicate triplets.
+// Given an integer array nums, return all the triplets [nums[i], nums[j], nums[k]] such that i !=
+// j, i != k, and j != k, and nums[i] + nums[j] + nums[k] == 0. Notice that the solution set must
+// not contain duplicate triplets.
 
 use std::cmp::Ordering;
 
@@ -54,7 +55,7 @@ pub fn three_sum(nums: Vec<i32>) -> Vec<Vec<i32>> {
                     // Move both pointers inward
                     l += 1;
                     r -= 1;
-                }
+                },
                 // Sum too small, need larger number
                 Ordering::Less => l += 1,
 

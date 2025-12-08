@@ -4,9 +4,11 @@
 //! ```
 
 use std::cell::UnsafeCell;
-use std::ops::{Deref, DerefMut};
+use std::ops::Deref;
+use std::ops::DerefMut;
 use std::sync::atomic::AtomicBool;
-use std::sync::atomic::Ordering::{Acquire, Release};
+use std::sync::atomic::Ordering::Acquire;
+use std::sync::atomic::Ordering::Release;
 
 pub struct SpinLock<T> {
     locked: AtomicBool,
@@ -25,10 +27,7 @@ unsafe impl<T> Sync for Guard<'_, T> where T: Sync {}
 
 impl<T> SpinLock<T> {
     pub const fn new(value: T) -> Self {
-        Self {
-            locked: AtomicBool::new(false),
-            value: UnsafeCell::new(value),
-        }
+        Self { locked: AtomicBool::new(false), value: UnsafeCell::new(value) }
     }
 
     // RAII Acquisition: lock() acquires the resource and returns a Guard

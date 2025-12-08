@@ -6,8 +6,8 @@
 /*
 You are given an m x n integer matrix matrix with the following two properties:
 
-	Each row is sorted in non-decreasing order.
-	The first integer of each row is greater than the last integer of the previous row.
+    Each row is sorted in non-decreasing order.
+    The first integer of each row is greater than the last integer of the previous row.
 
 Given an integer target, return true if target is in matrix or false otherwise.
 
@@ -15,64 +15,64 @@ You must write a solution in O(log(m * n)) time complexity.
 
 Constraints:
 
-	m == matrix.length
-	n == matrix[i].length
-	1 <= m, n <= 100
-	-104 <= matrix[i][j], target <= 104
+    m == matrix.length
+    n == matrix[i].length
+    1 <= m, n <= 100
+    -104 <= matrix[i][j], target <= 104
 */
 
 pub fn search_matrix(matrix: Vec<Vec<i32>>, target: i32) -> bool {
-	// Get matrix dimensions
-	let m = matrix.len();
-	let n = matrix[0].len();
+    // Get matrix dimensions
+    let m = matrix.len();
+    let n = matrix[0].len();
 
-	// Use i32 for left/right to avoid underflow when subtracting
-	let mut left = 0_i32;
-	let mut right = (m * n - 1) as i32;
+    // Use i32 for left/right to avoid underflow when subtracting
+    let mut left = 0_i32;
+    let mut right = (m * n - 1) as i32;
 
-	while left <= right {
-		// Calculate middle index in the virtual 1D array
-		let mid = left + (right - left) / 2;
+    while left <= right {
+        // Calculate middle index in the virtual 1D array
+        let mid = left + (right - left) / 2;
 
-		// Convert mid back to usize for indexing
-		let mid_usize = mid as usize;
+        // Convert mid back to usize for indexing
+        let mid_usize = mid as usize;
 
-		// Convert 1D index to 2D matrix coordinates
-		// row = how many complete rows we've passed
-		// col = position within current row
-		let row = mid_usize / n;
-		let col = mid_usize % n;
-		let mid_value = matrix[row][col];
+        // Convert 1D index to 2D matrix coordinates
+        // row = how many complete rows we've passed
+        // col = position within current row
+        let row = mid_usize / n;
+        let col = mid_usize % n;
+        let mid_value = matrix[row][col];
 
-		// Standard binary search comparison
-		if mid_value == target {
-			return true;
-		} else if mid_value < target {
-			// Target is larger, search right half
-			left = mid + 1;
-		} else {
-			// Target is smaller, search left half
-			// Safe with i32 (can go negative, loop will exit)
-			right = mid - 1;
-		}
-	}
+        // Standard binary search comparison
+        if mid_value == target {
+            return true;
+        } else if mid_value < target {
+            // Target is larger, search right half
+            left = mid + 1;
+        } else {
+            // Target is smaller, search left half
+            // Safe with i32 (can go negative, loop will exit)
+            right = mid - 1;
+        }
+    }
 
-	// Target not found
-	false
+    // Target not found
+    false
 }
 
 fn main() {
-	assert_eq!(
-		search_matrix(vec![vec![1, 3, 5, 7], vec![10, 11, 16, 20], vec![23, 30, 34, 60]], 3),
-		true
-	);
-	assert_eq!(
-		search_matrix(vec![vec![1, 3, 5, 7], vec![10, 11, 16, 20], vec![23, 30, 34, 60]], 13),
-		false
-	);
-	assert_eq!(search_matrix(vec![vec![1]], 1), true);
-	assert_eq!(search_matrix(vec![vec![1]], 2), false);
-	assert_eq!(search_matrix(vec![vec![1, 3]], 3), true);
+    assert_eq!(
+        search_matrix(vec![vec![1, 3, 5, 7], vec![10, 11, 16, 20], vec![23, 30, 34, 60]], 3),
+        true
+    );
+    assert_eq!(
+        search_matrix(vec![vec![1, 3, 5, 7], vec![10, 11, 16, 20], vec![23, 30, 34, 60]], 13),
+        false
+    );
+    assert_eq!(search_matrix(vec![vec![1]], 1), true);
+    assert_eq!(search_matrix(vec![vec![1]], 2), false);
+    assert_eq!(search_matrix(vec![vec![1, 3]], 3), true);
 
-	println!("All tests passed!");
+    println!("All tests passed!");
 }

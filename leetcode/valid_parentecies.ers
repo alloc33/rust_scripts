@@ -3,7 +3,8 @@
 //! [dependencies]
 //! ```
 
-// **Problem:** Given a string containing only `()[]{}`, determine if the brackets are valid (properly opened and closed in correct order).
+// **Problem:** Given a string containing only `()[]{}`, determine if the brackets are valid
+// (properly opened and closed in correct order).
 
 fn is_valid(string: String) -> bool {
     let chars: Vec<char> = string.chars().collect();
@@ -13,7 +14,7 @@ fn is_valid(string: String) -> bool {
         match ch {
             '(' | '[' | '{' => {
                 stack.push(ch);
-            }
+            },
             ')' | ']' | '}' => {
                 if stack.is_empty() {
                     return false;
@@ -21,15 +22,15 @@ fn is_valid(string: String) -> bool {
 
                 let bracket = stack.pop().unwrap();
 
-                let matches = ('(' == bracket && ch == ')')
-                    || ('[' == bracket && ch == ']')
-                    || ('{' == bracket && ch == '}');
+                let matches = ('(' == bracket && ch == ')') ||
+                    ('[' == bracket && ch == ']') ||
+                    ('{' == bracket && ch == '}');
 
                 if !matches {
                     return false
                 }
-            }
-            _ => {}
+            },
+            _ => {},
         }
     }
 

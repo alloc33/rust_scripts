@@ -3,21 +3,23 @@
 //! [dependencies]
 //! ```
 
-// Given two strings s and t of lengths m and n respectively, return the minimum window substring of s such that every character in t (including duplicates) is included in the window. If there is no such substring, return the empty string "".
+// Given two strings s and t of lengths m and n respectively, return the minimum window substring of
+// s such that every character in t (including duplicates) is included in the window. If there is no
+// such substring, return the empty string "".
 
 // The testcases will be generated such that the answer is unique.
 // use std::collections::HashMap;
 
 pub fn min_window(s: String, t: String) -> String {
-	todo!()
+    todo!()
 }
 
 fn main() {
-	assert_eq!(min_window("ADOBECODEBANC".to_string(), "ABC".to_string()), "BANC");
-	assert_eq!(min_window("a".to_string(), "a".to_string()), "a");
-	assert_eq!(min_window("a".to_string(), "aa".to_string()), "");
-	assert_eq!(min_window("ab".to_string(), "b".to_string()), "b");
-	assert_eq!(min_window("abc".to_string(), "cba".to_string()), "abc");
+    assert_eq!(min_window("ADOBECODEBANC".to_string(), "ABC".to_string()), "BANC");
+    assert_eq!(min_window("a".to_string(), "a".to_string()), "a");
+    assert_eq!(min_window("a".to_string(), "aa".to_string()), "");
+    assert_eq!(min_window("ab".to_string(), "b".to_string()), "b");
+    assert_eq!(min_window("abc".to_string(), "cba".to_string()), "abc");
 
-	println!("All tests passed!");
+    println!("All tests passed!");
 }

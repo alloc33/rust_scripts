@@ -3,45 +3,47 @@
 //! [dependencies]
 //! ```
 
-// Given an array of meeting time interval objects consisting of start and end times [[start_1,end_1],[start_2,end_2],...] (start_i < end_i), find the minimum number of days required to schedule all meetings without any conflicts.
+// Given an array of meeting time interval objects consisting of start and end times
+// [[start_1,end_1],[start_2,end_2],...] (start_i < end_i), find the minimum number of days required
+// to schedule all meetings without any conflicts.
 
 // Note: (0,8),(8,10) is not considered a conflict at 8.
 
 #[derive(Debug, Clone)]
 pub struct Interval {
-	start: i32,
-	end: i32,
+    start: i32,
+    end: i32,
 }
 
 impl Interval {
-	fn new(start: i32, end: i32) -> Self {
-		Interval { start, end }
-	}
+    fn new(start: i32, end: i32) -> Self {
+        Interval { start, end }
+    }
 }
 
 pub fn min_meeting_rooms(intervals: Vec<Interval>) -> i32 {
-	todo!()
+    todo!()
 }
 
 fn main() {
-	assert_eq!(
-		min_meeting_rooms(vec![Interval::new(0, 30), Interval::new(5, 10), Interval::new(15, 20)]),
-		2
-	);
+    assert_eq!(
+        min_meeting_rooms(vec![Interval::new(0, 30), Interval::new(5, 10), Interval::new(15, 20)]),
+        2
+    );
 
-	assert_eq!(min_meeting_rooms(vec![Interval::new(7, 10), Interval::new(2, 4)]), 1);
+    assert_eq!(min_meeting_rooms(vec![Interval::new(7, 10), Interval::new(2, 4)]), 1);
 
-	assert_eq!(
-		min_meeting_rooms(vec![
-			Interval::new(1, 5),
-			Interval::new(2, 3),
-			Interval::new(4, 6),
-			Interval::new(5, 7)
-		]),
-		2
-	);
+    assert_eq!(
+        min_meeting_rooms(vec![
+            Interval::new(1, 5),
+            Interval::new(2, 3),
+            Interval::new(4, 6),
+            Interval::new(5, 7)
+        ]),
+        2
+    );
 
-	assert_eq!(min_meeting_rooms(vec![]), 0);
+    assert_eq!(min_meeting_rooms(vec![]), 0);
 
-	println!("All tests passed!");
+    println!("All tests passed!");
 }

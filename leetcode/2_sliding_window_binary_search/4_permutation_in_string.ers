@@ -11,67 +11,67 @@
 //     s1 and s2 consist of lowercase English letters.
 
 pub fn check_inclusion(s1: String, s2: String) -> bool {
-	// Edge case: if s1 is longer than s2, no permutation can exist in s2
-	if s1.len() > s2.len() {
-		return false;
-	}
+    // Edge case: if s1 is longer than s2, no permutation can exist in s2
+    if s1.len() > s2.len() {
+        return false;
+    }
 
-	// Array to count frequency of each letter (a-z) in s1
-	// Index 0 = 'a', index 1 = 'b', ..., index 25 = 'z'
-	let mut s1_count = [0; 26];
+    // Array to count frequency of each letter (a-z) in s1
+    // Index 0 = 'a', index 1 = 'b', ..., index 25 = 'z'
+    let mut s1_count = [0; 26];
 
-	// Count how many times each character appears in s1
-	for ch in s1.bytes() {
-		// Convert letter to index: 'a'->0, 'b'->1, 'c'->2, etc.
-		s1_count[(ch - b'a') as usize] += 1;
-	}
+    // Count how many times each character appears in s1
+    for ch in s1.bytes() {
+        // Convert letter to index: 'a'->0, 'b'->1, 'c'->2, etc.
+        s1_count[(ch - b'a') as usize] += 1;
+    }
 
-	// Array to count frequency of characters in current sliding window of s2
-	let mut window_count = [0; 26];
-	let s2_bytes = s2.as_bytes();
+    // Array to count frequency of characters in current sliding window of s2
+    let mut window_count = [0; 26];
+    let s2_bytes = s2.as_bytes();
 
-	// Window size equals s1 length (looking for permutation of s1)
-	let window_size = s1.len();
+    // Window size equals s1 length (looking for permutation of s1)
+    let window_size = s1.len();
 
-	// Build the first window of size s1.len() from the start of s2
-	// Example: if s1="ab" (size 2) and s2="eidbaooo", first window is "ei"
-	for i in 0..window_size {
-		window_count[(s2_bytes[i] - b'a') as usize] += 1;
-	}
+    // Build the first window of size s1.len() from the start of s2
+    // Example: if s1="ab" (size 2) and s2="eidbaooo", first window is "ei"
+    for i in 0..window_size {
+        window_count[(s2_bytes[i] - b'a') as usize] += 1;
+    }
 
-	// Check if the first window is a permutation of s1
-	// If character frequencies match, we found a permutation!
-	if s1_count == window_count {
-		return true;
-	}
+    // Check if the first window is a permutation of s1
+    // If character frequencies match, we found a permutation!
+    if s1_count == window_count {
+        return true;
+    }
 
-	// Slide the window one position at a time through rest of s2
-	// Start from position window_size (right after first window)
-	for i in window_size..s2.len() {
-		// Expand window to the right: add new character entering the window
-		window_count[(s2_bytes[i] - b'a') as usize] += 1;
+    // Slide the window one position at a time through rest of s2
+    // Start from position window_size (right after first window)
+    for i in window_size..s2.len() {
+        // Expand window to the right: add new character entering the window
+        window_count[(s2_bytes[i] - b'a') as usize] += 1;
 
-		// Shrink window from the left: remove character leaving the window
-		// The leaving character is window_size positions behind current position
-		window_count[(s2_bytes[i - window_size] - b'a') as usize] -= 1;
+        // Shrink window from the left: remove character leaving the window
+        // The leaving character is window_size positions behind current position
+        window_count[(s2_bytes[i - window_size] - b'a') as usize] -= 1;
 
-		// After sliding, check if current window has same character frequencies as s1
-		// If yes, this window is a permutation of s1
-		if s1_count == window_count {
-			return true;
-		}
-	}
+        // After sliding, check if current window has same character frequencies as s1
+        // If yes, this window is a permutation of s1
+        if s1_count == window_count {
+            return true;
+        }
+    }
 
-	// No window in s2 matched s1's character frequencies
-	false
+    // No window in s2 matched s1's character frequencies
+    false
 }
 
 fn main() {
-	assert_eq!(check_inclusion("ab".to_string(), "eidbaooo".to_string()), true);
-	assert_eq!(check_inclusion("ab".to_string(), "eidboaoo".to_string()), false);
-	assert_eq!(check_inclusion("adc".to_string(), "dcda".to_string()), true);
-	assert_eq!(check_inclusion("a".to_string(), "a".to_string()), true);
-	assert_eq!(check_inclusion("ab".to_string(), "a".to_string()), false);
+    assert_eq!(check_inclusion("ab".to_string(), "eidbaooo".to_string()), true);
+    assert_eq!(check_inclusion("ab".to_string(), "eidboaoo".to_string()), false);
+    assert_eq!(check_inclusion("adc".to_string(), "dcda".to_string()), true);
+    assert_eq!(check_inclusion("a".to_string(), "a".to_string()), true);
+    assert_eq!(check_inclusion("ab".to_string(), "a".to_string()), false);
 
-	println!("All tests passed!");
+    println!("All tests passed!");
 }

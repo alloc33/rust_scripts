@@ -1,0 +1,58 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! ```
+
+fn shortest_path(maze: &[Vec<char>], start: (usize, usize), end: (usize, usize)) -> i32 {
+    todo!()
+}
+
+fn main() {
+    // Test 1: Simple straight path
+    #[rustfmt::skip]
+    let maze1 = vec![
+        vec!['.', '.', '.'],
+        vec!['.', '.', '.'],
+        vec!['.', '.', '.']
+    ];
+    assert_eq!(shortest_path(&maze1, (0, 0), (2, 2)), 4);
+
+    // Test 2: Path with walls
+    #[rustfmt::skip]
+    let maze2 = vec![
+        vec!['.', '#', '.'],
+        vec!['.', '#', '.'],
+        vec!['.', '.', '.']
+    ];
+    assert_eq!(shortest_path(&maze2, (0, 0), (0, 2)), 6);
+
+    // Test 3: No path (blocked)
+    #[rustfmt::skip]
+    let maze3 = vec![
+        vec!['.', '#', '.'],
+        vec!['.', '#', '.'],
+        vec!['.', '#', '.']
+    ];
+    assert_eq!(shortest_path(&maze3, (0, 0), (0, 2)), -1);
+
+    // Test 4: Start equals end
+    #[rustfmt::skip]
+    let maze4 = vec![
+        vec!['.', '.', '.'],
+        vec!['.', '.', '.']
+    ];
+    assert_eq!(shortest_path(&maze4, (0, 0), (0, 0)), 0);
+
+    // Test 5: Longer maze
+    #[rustfmt::skip]
+    let maze5 = vec![
+        vec!['.', '.', '.', '#', '.'],
+        vec!['#', '#', '.', '#', '.'],
+        vec!['.', '.', '.', '.', '.'],
+        vec!['.', '#', '#', '#', '.'],
+        vec!['.', '.', '.', '.', '.']
+    ];
+    assert_eq!(shortest_path(&maze5, (0, 0), (4, 4)), 8);
+
+    println!("All tests passed!");
+}

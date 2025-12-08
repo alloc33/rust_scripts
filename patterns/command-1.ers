@@ -4,7 +4,11 @@
 //! ```
 
 use std::fs::File;
-use std::io::{BufRead, BufReader, Error, Seek, Write};
+use std::io::BufRead;
+use std::io::BufReader;
+use std::io::Error;
+use std::io::Seek;
+use std::io::Write;
 
 trait Command {
     fn execute(&self) -> Result<(), Error>;

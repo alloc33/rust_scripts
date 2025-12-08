@@ -14,9 +14,7 @@ pub struct KVStore {
 impl KVStore {
     /// Creates a new empty KVStore
     pub fn new() -> Self {
-        KVStore {
-            store: HashMap::new(),
-        }
+        KVStore { store: HashMap::new() }
     }
 
     /// Sets a key-value pair in the store
@@ -40,15 +38,12 @@ impl KVStore {
     /// Counts the number of keys that have the given value
     /// Time complexity: O(n) where n is the number of entries
     pub fn count(&self, value: &str) -> usize {
-        self.store
-            .values()
-            .filter(|v| v.as_str() == value)
-            .count()
+        self.store.values().filter(|v| v.as_str() == value).count()
     }
 }
 
 // NOTE: In a real interview, I would discuss these potential enhancements:
-// 
+//
 // 1. Generic Implementation:
 //    - Make KVStore generic over K: Hash + Eq, V: PartialEq
 //    - Allows reuse with any hashable key type and comparable value type
@@ -74,7 +69,7 @@ fn main() {
 
     // Demonstrate the required operations
     println!("=== KVStore Demo ===\n");
-    
+
     // SET operations
     store.set("a", "foo");
     store.set("b", "foo");
@@ -100,7 +95,7 @@ fn main() {
     println!("  delete('a') returned: {}", deleted);
     println!("  get('a') after delete = {:?}", store.get("a"));
     println!("  count('foo') after delete = {}", store.count("foo"));
-    
+
     // Delete non-existent key
     let deleted = store.delete("nonexistent");
     println!("  delete('nonexistent') returned: {}", deleted);
@@ -155,10 +150,10 @@ mod tests {
     #[test]
     fn test_update_existing_key() {
         let mut store = KVStore::new();
-        
+
         store.set("key", "value1");
         assert_eq!(store.get("key"), Some("value1"));
-        
+
         store.set("key", "value2");
         assert_eq!(store.get("key"), Some("value2"));
         assert_eq!(store.count("value1"), 0);
@@ -176,7 +171,7 @@ mod tests {
     fn test_multiple_deletes() {
         let mut store = KVStore::new();
         store.set("key", "value");
-        
+
         assert_eq!(store.delete("key"), true);
         assert_eq!(store.delete("key"), false); // Second delete returns false
     }
@@ -186,7 +181,8 @@ mod tests {
 // (I would mention this but not implement unless asked)
 #[allow(dead_code)]
 mod optimized {
-    use std::collections::{HashMap, HashSet};
+    use std::collections::HashMap;
+    use std::collections::HashSet;
 
     pub struct OptimizedKVStore {
         store: HashMap<String, String>,
@@ -195,10 +191,7 @@ mod optimized {
 
     impl OptimizedKVStore {
         pub fn new() -> Self {
-            OptimizedKVStore {
-                store: HashMap::new(),
-                value_index: HashMap::new(),
-            }
+            OptimizedKVStore { store: HashMap::new(), value_index: HashMap::new() }
         }
 
         pub fn set(&mut self, key: &str, value: &str) {
@@ -221,10 +214,7 @@ mod optimized {
         }
 
         pub fn count(&self, value: &str) -> usize {
-            self.value_index
-                .get(value)
-                .map(|keys| keys.len())
-                .unwrap_or(0)
+            self.value_index.get(value).map(|keys| keys.len()).unwrap_or(0)
         }
 
         // ... other methods similar to basic implementation
