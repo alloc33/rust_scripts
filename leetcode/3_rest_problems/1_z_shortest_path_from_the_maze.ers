@@ -6,6 +6,27 @@
 use std::collections::HashSet;
 use std::collections::VecDeque;
 
+// You are given an `m x n` maze represented as a 2D character array where:
+// - `'.'` represents an empty cell (walkable)
+// - `'#'` represents a wall (blocked)
+
+// You are also given two positions:
+// - `start = [row_start, col_start]` - the starting position
+// - `end = [row_end, col_end]` - the destination position
+
+// Return the length of the shortest path from `start` to `end`. If no such path exists, return `-1`.
+
+// You can move in four directions: up, down, left, and right. You cannot move diagonally or move outside the maze boundaries.
+
+// ## Constraints
+
+// - `m == maze.length`
+// - `n == maze[i].length`
+// - `1 <= m, n <= 100`
+// - `maze[i][j]` is either `'.'` or `'#'`
+// - `0 <= row_start, row_end < m`
+// - `0 <= col_start, col_end < n`
+
 fn shortest_path(maze: &[Vec<char>], start: (usize, usize), end: (usize, usize)) -> i32 {
     // Get maze dimensions for boundary checking
     let rows = maze.len();
