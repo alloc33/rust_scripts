@@ -1,0 +1,70 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! ```
+
+// Given an m x n binary matrix mat, return the distance of the nearest 0 for each cell.
+
+// The distance between two cells sharing a common edge is 1.
+
+// Constraints:
+//     m == mat.length
+//     n == mat[i].length
+//     1 <= m, n <= 104
+//     1 <= m * n <= 104
+//     mat[i][j] is either 0 or 1.
+//     There is at least one 0 in mat.
+
+pub fn update_matrix(mat: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
+    todo!()
+}
+
+fn main() {
+    #[rustfmt::skip]
+    assert_eq!(
+        update_matrix(
+            vec![
+                vec![0, 0, 0],
+                vec![0, 1, 0],
+                vec![0, 0, 0]]
+        ),
+        vec![
+            vec![0, 0, 0],
+            vec![0, 1, 0],
+            vec![0, 0, 0]
+        ]
+    );
+
+    #[rustfmt::skip]
+    assert_eq!(
+        update_matrix(
+            vec![
+                vec![0, 0, 0],
+                vec![0, 1, 0],
+                vec![1, 1, 1]
+            ]),
+        vec![
+            vec![0, 0, 0],
+            vec![0, 1, 0],
+            vec![1, 2, 1]
+        ]
+    );
+
+    assert_eq!(update_matrix(vec![vec![0]]), vec![vec![0]]);
+
+    #[rustfmt::skip]
+    assert_eq!(
+        update_matrix(
+            vec![
+                vec![1, 1, 1],
+                vec![1, 1, 1],
+                vec![1, 1, 0]
+            ]),
+        vec![
+            vec![4, 3, 2],
+            vec![3, 2, 1],
+            vec![2, 1, 0]
+        ]);
+
+    println!("All tests passed!");
+}

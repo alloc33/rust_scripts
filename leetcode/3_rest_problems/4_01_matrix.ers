@@ -1,0 +1,126 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! ```
+
+use std::collections::VecDeque;
+
+// Given an m x n binary matrix mat, return the distance of the nearest 0 for each cell.
+
+// The distance between two cells sharing a common edge is 1.
+
+// Constraints:
+//     m == mat.length
+//     n == mat[i].length
+//     1 <= m, n <= 104
+//     1 <= m * n <= 104
+//     mat[i][j] is either 0 or 1.
+//     There is at least one 0 in mat.
+
+pub fn update_matrix(mat: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
+    let m = mat.len();
+    let n = mat[0].len();
+
+    // Result matrix to store distances
+    let mut result = vec![vec![i32::MAX; n]; m];
+
+    // 4 directions: up, down, left, right
+    let directions = [(-1, 0), (1, 0), (0, -1), (0, 1)];
+
+    // BFS queue: stores (row, col)
+    let mut queue = VecDeque::new();
+
+    // Multi-source BFS: Add ALL 0s to queue initially
+    // Set their distance to 0
+    for i in 0..m {
+        for j in 0..n {
+            if mat[i][j] == 0 {
+                result[i][j] = 0;
+                queue.push_back((i, j));
+            }
+        }
+    }
+
+    // BFS from all 0s simultaneously
+    while let Some((row, col)) = queue.pop_front() {
+        // Current distance from nearest 0
+        let current_distance = result[row][col];
+
+        // Try all 4 directions
+        for &(dr, dc) in &directions {
+            let new_row = row as i32 + dr;
+            let new_col = col as i32 + dc;
+
+            // Check bounds
+            if new_row < 0 || new_row >= m as i32 || new_col < 0 || new_col >= n as i32 {
+                continue;
+            }
+
+            let new_row = new_row as usize;
+            let new_col = new_col as usize;
+
+            // Only update if we found a shorter distance
+            // Initially, 1s have distance MAX (unvisited)
+            // Skip if already visited (has distance < MAX)
+            if result[new_row][new_col] > current_distance + 1 {
+                // Update distance: current distance + 1 step
+                result[new_row][new_col] = current_distance + 1;
+
+                // Add to queue to explore its neighbors
+                queue.push_back((new_row, new_col));
+            }
+        }
+    }
+
+    result
+}
+
+fn main() {
+    #[rustfmt::skip]
+    assert_eq!(
+        update_matrix(
+            vec![
+                vec![0, 0, 0],
+                vec![0, 1, 0],
+                vec![0, 0, 0]]
+        ),
+        vec![
+            vec![0, 0, 0],
+            vec![0, 1, 0],
+            vec![0, 0, 0]
+        ]
+    );
+
+    #[rustfmt::skip]
+    assert_eq!(
+        update_matrix(
+            vec![
+                vec![0, 0, 0],
+                vec![0, 1, 0],
+                vec![1, 1, 1]
+            ]),
+        vec![
+            vec![0, 0, 0],
+            vec![0, 1, 0],
+            vec![1, 2, 1]
+        ]
+    );
+
+    assert_eq!(update_matrix(vec![vec![0]]), vec![vec![0]]);
+
+    #[rustfmt::skip]
+    assert_eq!(
+        update_matrix(
+            vec![
+                vec![1, 1, 1],
+                vec![1, 1, 1],
+                vec![1, 1, 0]
+            ]),
+        vec![
+            vec![4, 3, 2],
+            vec![3, 2, 1],
+            vec![2, 1, 0]
+        ]);
+
+    println!("All tests passed!");
+}
