@@ -4,54 +4,48 @@
 //! rand = "0.8"
 //! ```
 
-// Implement the RandomizedSet class:
-
-//     RandomizedSet() Initializes the RandomizedSet object.
-//     bool insert(int val) Inserts an item val into the set if not present. Returns true if the item was not present, false otherwise.
-//     bool remove(int val) Removes an item val from the set if present. Returns true if the item was present, false otherwise.
-//     int getRandom() Returns a random element from the current set of elements (it's guaranteed that at least one element exists when this method is called). Each element must have the same probability of being returned.
-
-// You must implement the functions of the class such that each function works in average O(1) time complexity.
-
-struct RandomizedSet;
+todo!()
 
 fn main() {
-    // Test 1: Basic insert operations
-    let mut set = RandomizedSet::new();
-    assert_eq!(set.insert(1), true);
-    assert_eq!(set.insert(2), true);
-    assert_eq!(set.insert(1), false); // duplicate
+    let mut rm = RandomMap::new();
 
-    // Test 2: Basic remove operations
-    assert_eq!(set.remove(1), true);
-    assert_eq!(set.remove(1), false); // already removed
-    assert_eq!(set.remove(3), false); // never existed
+    // Test insert
+    assert_eq!(rm.insert(1, "one"), true);
+    assert_eq!(rm.insert(2, "two"), true);
+    assert_eq!(rm.insert(3, "three"), true);
+    assert_eq!(rm.insert(1, "duplicate"), false); // Already exists
 
-    // Test 3: Insert, remove, insert same value
-    let mut set2 = RandomizedSet::new();
-    assert_eq!(set2.insert(5), true);
-    assert_eq!(set2.remove(5), true);
-    assert_eq!(set2.insert(5), true);
-
-    // Test 4: getRandom returns existing values
-    let mut set3 = RandomizedSet::new();
-    set3.insert(10);
-    set3.insert(20);
-    set3.insert(30);
+    // Test get_random returns valid values
     for _ in 0..10 {
-        let val = set3.get_random();
-        assert!(val == 10 || val == 20 || val == 30);
+        let val = rm.get_random();
+        assert!(["one", "two", "three"].contains(val));
     }
 
-    // Test 5: Complex sequence
-    let mut set4 = RandomizedSet::new();
-    assert_eq!(set4.insert(0), true);
-    assert_eq!(set4.insert(1), true);
-    assert_eq!(set4.remove(0), true);
-    assert_eq!(set4.insert(2), true);
-    assert_eq!(set4.remove(1), true);
-    let val = set4.get_random();
-    assert_eq!(val, 2); // only 2 should be left
+    // Test remove
+    assert_eq!(rm.remove(&2), true);
+    assert_eq!(rm.remove(&2), false); // Already removed
+    assert_eq!(rm.remove(&99), false); // Never existed
+
+    // After removing 2, only 1 and 3 should remain
+    for _ in 0..10 {
+        let val = rm.get_random();
+        assert!(["one", "three"].contains(val));
+    }
+
+    // Remove remaining
+    assert_eq!(rm.remove(&1), true);
+    assert_eq!(rm.remove(&3), true);
+
+    // Test with strings
+    let mut str_map = RandomMap::new();
+    str_map.insert("key1".to_string(), 100);
+    str_map.insert("key2".to_string(), 200);
+    str_map.insert("key3".to_string(), 300);
+
+    for _ in 0..10 {
+        let val = str_map.get_random();
+        assert!([100, 200, 300].contains(val));
+    }
 
     println!("All tests passed!");
 }
