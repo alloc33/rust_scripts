@@ -1,0 +1,122 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! rand = "0.8"
+//! ```
+
+// Implement the RandomizedSet class:
+
+//     RandomizedSet() Initializes the RandomizedSet object.
+//     bool insert(int val) Inserts an item val into the set if not present. Returns true if the item was not present, false otherwise.
+//     bool remove(int val) Removes an item val from the set if present. Returns true if the item was present, false otherwise.
+//     int getRandom() Returns a random element from the current set of elements (it's guaranteed that at least one element exists when this method is called). Each element must have the same probability of being returned.
+
+// You must implement the functions of the class such that each function works in average O(1) time complexity.
+
+use rand::Rng;
+use std::collections::HashMap;
+
+struct RandomizedSet {
+    // HashMap: value -> index in vec
+    // Allows O(1) lookup to check if value exists and find its position
+    map: HashMap<i32, usize>,
+
+    // Vec: stores actual values
+    // Allows O(1) random access by index
+    vec: Vec<i32>,
+}
+
+impl RandomizedSet {
+    fn new() -> Self {
+        RandomizedSet { map: HashMap::new(), vec: Vec::new() }
+    }
+
+    fn insert(&mut self, val: i32) -> bool {
+        // Check if value already exists
+        if self.map.contains_key(&val) {
+            return false; // Already present
+        }
+
+        // Add to end of vec
+        self.vec.push(val);
+
+        // Store value -> index mapping
+        // Index is last position (len - 1)
+        self.map.insert(val, self.vec.len() - 1);
+
+        true
+    }
+
+    fn remove(&mut self, val: i32) -> bool {
+        // Check if value exists
+        if let Some(&index) = self.map.get(&val) {
+            // Get last element in vec
+            let last_element = *self.vec.last().unwrap();
+
+            // Swap: move last element to position of element to remove
+            self.vec[index] = last_element;
+
+            // Update the moved element's index in map
+            self.map.insert(last_element, index);
+
+            // Remove last element from vec (which is now the element we want to delete)
+            self.vec.pop();
+
+            // Remove from map
+            self.map.remove(&val);
+
+            true
+        } else {
+            false // Not present
+        }
+    }
+
+    fn get_random(&self) -> i32 {
+        // Generate random index in range [0, vec.len())
+        let random_index = rand::thread_rng().gen_range(0..self.vec.len());
+
+        // Return element at random index
+        self.vec[random_index]
+    }
+}
+
+fn main() {
+    // Test 1: Basic insert operations
+    let mut set = RandomizedSet::new();
+    assert_eq!(set.insert(1), true);
+    assert_eq!(set.insert(2), true);
+    assert_eq!(set.insert(1), false); // duplicate
+
+    // Test 2: Basic remove operations
+    assert_eq!(set.remove(1), true);
+    assert_eq!(set.remove(1), false); // already removed
+    assert_eq!(set.remove(3), false); // never existed
+
+    // Test 3: Insert, remove, insert same value
+    let mut set2 = RandomizedSet::new();
+    assert_eq!(set2.insert(5), true);
+    assert_eq!(set2.remove(5), true);
+    assert_eq!(set2.insert(5), true);
+
+    // Test 4: getRandom returns existing values
+    let mut set3 = RandomizedSet::new();
+    set3.insert(10);
+    set3.insert(20);
+    set3.insert(30);
+    for _ in 0..10 {
+        let val = set3.get_random();
+        assert!(val == 10 || val == 20 || val == 30);
+    }
+
+    // Test 5: Complex sequence
+    let mut set4 = RandomizedSet::new();
+    assert_eq!(set4.insert(0), true);
+    assert_eq!(set4.insert(1), true);
+    assert_eq!(set4.remove(0), true);
+    assert_eq!(set4.insert(2), true);
+    assert_eq!(set4.remove(1), true);
+    let val = set4.get_random();
+    assert_eq!(val, 2); // only 2 should be left
+
+    println!("All tests passed!");
+}
