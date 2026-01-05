@@ -3,9 +3,10 @@
 //! [dependencies]
 //! ```
 
-// Given an integer array nums, find the subarray with the largest sum, and return its sum.
-
-// Version 1: Kadane's Algorithm - Reset approach
+/// Kadane's Algorithm
+/// -----
+/// Given an integer array nums, find the subarray with the largest sum, and return its sum.
+/// Version 1: Kadane's Algorithm - Reset approach
 pub fn max_sub_array(nums: Vec<i32>) -> i32 {
     todo!()
 }
