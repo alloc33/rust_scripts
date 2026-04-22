@@ -9,6 +9,8 @@
 // s such that every character in t (including duplicates) is included in the window. If there is no
 // such substring, return the empty string "".
 
+// Slide a window across s. Grow it on the right until it contains all of t. Then shrink it from the left as much as you can while it's still valid. Record the smallest valid window you ever see.
+
 use std::collections::HashMap;
 
 pub fn min_window(s: String, t: String) -> String {
