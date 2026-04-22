@@ -94,3 +94,74 @@ fn main() {
 
     println!("All tests passed!");
 }
+
+// Explanation
+
+/*
+You're right, I threw too much at you at once. Let me try again, much simpler.
+
+## The Problem in Plain English
+
+You have a long string `s = "ADOBECODEBANC"` and a short string `t = "ABC"`.
+
+Find the shortest piece of `s` that contains all the letters of `t`. Answer: `"BANC"`.
+
+That's it. That's the whole problem.
+
+---
+
+## The Strategy: A Stretchy Window
+
+Imagine two fingers on the string. A left finger and a right finger. The stuff between them is your "window."
+
+```
+A D O B E C O D E B A N C
+↑         ↑
+left      right
+```
+
+You do two things, over and over:
+
+**Thing 1:** Move the right finger one step right. (Window grows.)
+
+**Thing 2:** If the window contains everything you need, move the left finger right to shrink it — as long as it still contains everything you need.
+
+Every time the window is "good" (contains all of `t`), check if it's the smallest good one you've seen. If yes, remember it.
+
+Keep doing this until the right finger falls off the end.
+
+**That's the entire algorithm.** Everything in the code is just machinery to do these two things.
+
+---
+
+## The One Tricky Question
+
+How does the code know if the window is "good"?
+
+Naive way: every step, count letters in the window, compare to `t`. Slow.
+
+Smart way: keep a single number called `formed`.
+
+Here's the idea. `t = "ABC"` has 3 different letters you need. So `required = 3`.
+
+`formed` = how many of those 3 letters you've currently collected enough of.
+
+- Window has no A, no B, no C → `formed = 0`
+- Window gets an A → `formed = 1`
+- Window gets a B → `formed = 2`
+- Window gets a C → `formed = 3` ← **good! equals required!**
+
+When `formed == required`, the window is good. That's the only check the code needs.
+
+---
+
+## That's Really It
+
+The rest of the code is just:
+
+- A hash map counting how many of each letter `t` needs
+- A hash map counting how many of each letter the current window has
+- Updating `formed` up by 1 when a letter hits its required count, and down by 1 when it drops below
+
+Do you want me to stop here and let you re-read the code with just these two ideas in mind (stretchy window + `formed` counter)? Or is there one specific line you want me to zoom into?
+*/
