@@ -3,6 +3,8 @@
 //! [dependencies]
 //! ```
 
+// Multi-source BFS
+// ---
 // You have a grid representing a floor plan with rooms, walls, and gates.
 // The grid is an m x n matrix where each cell contains one of three values:
 

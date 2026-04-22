@@ -6,6 +6,8 @@
 use std::collections::HashSet;
 use std::collections::VecDeque;
 
+// BFS
+// ---
 // You are given an `m x n` maze represented as a 2D character array where:
 // - `'.'` represents an empty cell (walkable)
 // - `'#'` represents a wall (blocked)

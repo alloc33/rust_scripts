@@ -3,18 +3,12 @@
 //! [dependencies]
 //! ```
 
-// **Problem:** Find two numbers in an array that add up to a target value. Return their indices.
+// HashMap complement search
+// --
+// Find two numbers in an array that add up to a target value. Return their indices.
 
 fn find_indicies(arr: Vec<i32>, target: i32) -> Vec<i32> {
-    let mut map = std::collections::HashMap::new();
-    for (idx, num) in arr.iter().enumerate() {
-        let diff = target - num;
-        if let Some(value) = map.get(&diff) {
-            return vec![idx as i32, *value];
-        }
-        map.insert(num, idx as i32);
-    }
-    vec![]
+    todo!()
 }
 
 fn main() {

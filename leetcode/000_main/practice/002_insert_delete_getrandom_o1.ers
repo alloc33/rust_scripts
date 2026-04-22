@@ -4,6 +4,12 @@
 //! rand = "0.8"
 //! ```
 
+// HashMap+Vec
+// ---
+// Implement a collection such that you can insert a key/value pair in O(1), delete some value (by
+// giving the key) in O(1), and ask for a pseudo-random value from the collection in O(1). You may
+// use a library to generate a random number.
+
 todo!()
 
 fn main() {

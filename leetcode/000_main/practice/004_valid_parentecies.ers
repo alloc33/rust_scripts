@@ -1,0 +1,23 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! ```
+
+// Stack
+// --
+// Given a string containing only `()[]{}`, determine if the brackets are valid
+// (properly opened and closed in correct order).
+
+fn is_valid(string: String) -> bool {
+    todo!()
+}
+
+fn main() {
+    let string1 = "()[]{}";
+    let string2 = "){}[]";
+    let string3 = "[()]";
+
+    dbg!(is_valid(string1.to_string()));
+    dbg!(is_valid(string2.to_string()));
+    dbg!(is_valid(string3.to_string()));
+}
