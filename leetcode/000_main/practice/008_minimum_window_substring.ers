@@ -9,47 +9,8 @@
 // s such that every character in t (including duplicates) is included in the window. If there is no
 // such substring, return the empty string "".
 
-use std::collections::HashMap;
-
 pub fn min_window(s: String, t: String) -> String {
-    if t.len() > s.len() {
-        return "".to_string();
-    }
-
-    let mut t_count: HashMap<char, i32> = HashMap::new();
-    for ch in t.chars() {
-        *t_count.entry(ch).or_insert(0) += 1;
-    }
-
-    let required = t_count.len();
-
-    let mut formed = 0;
-
-    let mut window_count: HashMap<char, i32> = HashMap::new();    
-
-    let chars: Vec<char> = s.chars().collect();
-    let mut left = 0;
-
-    let mut min_len = usize::MAX;
-    let mut min_left = 0;
-
-    for right in 0..chars.len() {
-        let ch = chars[right];
-        *window_count.entry(ch).or_insert(0) += 1;
-
-        if let Some(&count) = t_count.get(&ch) {
-            if window_count[&ch] == count {
-                formed += 1;
-            }
-        }
-
-        while formed == required && left <= right {
-            let window_len = right - left 
-        }
-
-    }
-
-    "".to_string() // remove it
+    todo!()
 }
 
 fn main() {
