@@ -8,12 +8,16 @@
 // Find two numbers in an array that add up to a target value. Return their indices.
 
 fn find_indicies(arr: Vec<i32>, target: i32) -> Vec<i32> {
+    // stores seen numbers -> index, so we can find complements in O(1)
     let mut map = std::collections::HashMap::new();
     for (idx, num) in arr.iter().enumerate() {
+        // the complement is what we need to pair with `num` to hit the target
         let diff = target - num;
+        // if complement was already seen, we found our pair
         if let Some(value) = map.get(&diff) {
             return vec![idx as i32, *value];
         }
+        // record this number so future iterations can find it as a complement
         map.insert(num, idx as i32);
     }
     vec![]

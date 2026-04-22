@@ -18,10 +18,10 @@ where
     K: Eq + std::hash::Hash + Clone,
     V: Clone,
 {
-    // key -> (value, index in keys vec)
+    // map gives O(1) lookup; storing the vec index lets us do O(1) removal too
     map: HashMap<K, (V, usize)>,
 
-    // index -> key (for random access)
+    // vec gives O(1) random access by picking a random index
     keys: Vec<K>,
 }
 
@@ -35,15 +35,15 @@ where
     }
 
     fn insert(&mut self, key: K, value: V) -> bool {
-        // Check if key already exists
+        // duplicates would break the index invariant
         if self.map.contains_key(&key) {
-            return false; // Key already present
+            return false;
         }
 
-        // Add key to end of keys vec
+        // append to vec so we can reference it by index for random access
         self.keys.push(key.clone());
 
-        // Store key -> (value, index) mapping
+        // store value + its vec position so removal can find it in O(1)
         let index = self.keys.len() - 1;
         self.map.insert(key, (value, index));
 
@@ -51,44 +51,35 @@ where
     }
 
     fn remove(&mut self, key: &K) -> bool {
-        // Check if key exists
         if let Some((_, index)) = self.map.get(key) {
             let index = *index;
 
-            // Get last key in vec
+            // swap-remove: move last element into the gap so vec stays contiguous
             let last_key = self.keys.last().unwrap().clone();
-
-            // Swap: move last key to position of key to remove
             self.keys[index] = last_key.clone();
 
-            // Update the moved key's index in map
+            // update the swapped key's stored index to reflect its new position
             if let Some((value, _)) = self.map.get(&last_key) {
                 let value = value.clone();
                 self.map.insert(last_key, (value, index));
             }
 
-            // Remove last key from vec
+            // pop the now-duplicate tail — O(1) vec removal
             self.keys.pop();
-
-            // Remove from map
             self.map.remove(key);
 
             true
         } else {
-            false // Key not present
+            false
         }
     }
 
     fn get_random(&self) -> &V {
-        // Generate random index
+        // uniform random index into vec — O(1) because vec is contiguous
         let random_index = rand::thread_rng().gen_range(0..self.keys.len());
-
-        // Get key at random index
+        // vec[i] -> key -> map lookup gives us the value
         let random_key = &self.keys[random_index];
-
-        // Look up value for that key
         let (value, _) = self.map.get(random_key).unwrap();
-
         value
     }
 }

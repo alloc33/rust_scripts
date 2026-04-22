@@ -9,20 +9,25 @@
 // (properly opened and closed in correct order).
 fn is_valid(string: String) -> bool {
     let chars: Vec<char> = string.chars().collect();
+    // stack tracks unmatched openers so we can verify correct nesting order
     let mut stack: Vec<char> = Vec::new();
     for ch in chars {
         match ch {
+            // opening brackets get pushed; they wait for a matching closer
             '(' | '[' | '{' => {
                 stack.push(ch);
             },
             ')' | ']' | '}' => {
+                // closer with no opener means invalid
                 if stack.is_empty() {
                     return false;
                 }
+                // most recent opener must match this closer (LIFO = correct nesting)
                 let bracket = stack.pop().unwrap();
                 let matches = ('(' == bracket && ch == ')')
                     || ('[' == bracket && ch == ']')
                     || ('{' == bracket && ch == '}');
+                // mismatched pair means wrong nesting order
                 if !matches {
                     return false;
                 }
@@ -30,6 +35,7 @@ fn is_valid(string: String) -> bool {
             _ => {},
         }
     }
+    // any remaining openers on the stack were never closed
     stack.is_empty()
 }
 

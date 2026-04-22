@@ -10,10 +10,14 @@
 // possible.
 use std::i32;
 fn maximum_profit(prices: Vec<i32>) -> i32 {
+    // tracks the cheapest buying price seen so far
     let mut min_price = i32::MAX;
+    // tracks the best profit achievable across all buy/sell combos
     let mut max_profit = 0;
     for price in prices {
+        // update buy price if today is cheaper — earlier buy = more potential profit
         min_price = min_price.min(price);
+        // selling today at `price` after buying at `min_price` — keep best
         max_profit = max_profit.max(price - min_price);
     }
     max_profit
