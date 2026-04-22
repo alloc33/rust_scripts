@@ -7,11 +7,9 @@
 // --
 // Given a string containing only `()[]{}`, determine if the brackets are valid
 // (properly opened and closed in correct order).
-
 fn is_valid(string: String) -> bool {
     let chars: Vec<char> = string.chars().collect();
     let mut stack: Vec<char> = Vec::new();
-
     for ch in chars {
         match ch {
             '(' | '[' | '{' => {
@@ -21,30 +19,32 @@ fn is_valid(string: String) -> bool {
                 if stack.is_empty() {
                     return false;
                 }
-
                 let bracket = stack.pop().unwrap();
-
-                let matches = ('(' == bracket && ch == ')') ||
-                    ('[' == bracket && ch == ']') ||
-                    ('{' == bracket && ch == '}');
-
+                let matches = ('(' == bracket && ch == ')')
+                    || ('[' == bracket && ch == ']')
+                    || ('{' == bracket && ch == '}');
                 if !matches {
-                    return false
+                    return false;
                 }
             },
             _ => {},
         }
     }
-
     stack.is_empty()
 }
 
 fn main() {
-    let string1 = "()[]{}";
-    let string2 = "){}[]";
-    let string3 = "[()]";
+    assert_eq!(is_valid("()".to_string()), true);
+    assert_eq!(is_valid("()[]{}".to_string()), true);
+    assert_eq!(is_valid("{[]}".to_string()), true);
+    assert_eq!(is_valid("(]".to_string()), false);
+    assert_eq!(is_valid("([)]".to_string()), false);
+    assert_eq!(is_valid("{[()]}".to_string()), true);
+    assert_eq!(is_valid("".to_string()), true);
+    assert_eq!(is_valid("(".to_string()), false);
+    assert_eq!(is_valid(")".to_string()), false);
+    assert_eq!(is_valid("(((((".to_string()), false);
+    assert_eq!(is_valid("(((()))".to_string()), false);
 
-    dbg!(is_valid(string1.to_string()));
-    dbg!(is_valid(string2.to_string()));
-    dbg!(is_valid(string3.to_string()));
+    println!("All tests passed!");
 }
