@@ -8,15 +8,19 @@
 // Given an array of stock prices where `prices[i]` is the price on day `i`, find the
 // maximum profit from buying on one day and selling on a future day. Return 0 if no profit is
 // possible.
-
 fn maximum_profit(prices: Vec<i32>) -> i32 {
     todo!()
 }
 
 fn main() {
-    let prices = [5, 8, 3, 1, 14, 7, 22, 9, 5, 3];
-    let prices1 = [7, 6, 4, 3];
+    assert_eq!(maximum_profit(vec![7, 1, 5, 3, 6, 4]), 5);
+    assert_eq!(maximum_profit(vec![7, 6, 4, 3, 1]), 0);
+    assert_eq!(maximum_profit(vec![1, 2, 3, 4, 5]), 4);
+    assert_eq!(maximum_profit(vec![5]), 0);
+    assert_eq!(maximum_profit(vec![2, 4]), 2);
+    assert_eq!(maximum_profit(vec![4, 2]), 0);
+    assert_eq!(maximum_profit(vec![3, 2, 6, 5, 0, 3]), 4);
 
-    dbg!(maximum_profit(prices.to_vec()));
-    dbg!(maximum_profit(prices1.to_vec()));
+    println!("All tests passed!");
 }
+
