@@ -30,6 +30,10 @@ use std::collections::VecDeque;
 // - `0 <= col_start, col_end < n`
 
 fn shortest_path(maze: &[Vec<char>], start: (usize, usize), end: (usize, usize)) -> i32 {
+    // Edge case: start or end is on a wall — no valid path possible
+    if maze[start.0][start.1] == '#' || maze[end.0][end.1] == '#' {
+        return -1;
+    }
     // Get maze dimensions for boundary checking
     let rows = maze.len();
     let cols = maze[0].len();
@@ -137,6 +141,17 @@ fn main() {
         vec!['.', '.', '.', '.', '.']
     ];
     assert_eq!(shortest_path(&maze5, (0, 0), (4, 4)), 8);
+
+    // Test 6: Start or end is on a wall
+    #[rustfmt::skip]
+    let maze6 = vec![
+        vec!['#', '.', '.'],
+        vec!['.', '.', '.'],
+        vec!['.', '.', '#']
+    ];
+    assert_eq!(shortest_path(&maze6, (0, 0), (2, 2)), -1); // both on walls
+    assert_eq!(shortest_path(&maze6, (0, 0), (1, 1)), -1); // start on wall
+    assert_eq!(shortest_path(&maze6, (1, 1), (2, 2)), -1); // end on wall
 
     println!("All tests passed!");
 }
