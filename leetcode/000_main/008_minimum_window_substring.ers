@@ -98,8 +98,6 @@ fn main() {
 // Explanation
 
 /*
-You're right, I threw too much at you at once. Let me try again, much simpler.
-
 ## The Problem in Plain English
 
 You have a long string `s = "ADOBECODEBANC"` and a short string `t = "ABC"`.
