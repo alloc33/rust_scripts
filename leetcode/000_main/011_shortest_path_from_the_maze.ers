@@ -72,21 +72,22 @@ fn shortest_path(maze: &[Vec<char>], start: (usize, usize), end: (usize, usize))
             let new_row = row as i32 + dr;
             let new_col = col as i32 + dc;
             // BOUNDARY CHECK: Make sure new position is inside the maze
-            if new_row >= 0 && new_row < rows as i32 && new_col >= 0 && new_col < cols as i32 {
-                // Convert back to usize for array indexing
-                let nr = new_row as usize;
-                let nc = new_col as usize;
-                // VALIDITY CHECK: Can we actually move to this cell?
-                // 1. maze[nr][nc] != '#' → not a wall (assume '#' = wall, '.' = open)
-                // 2. !visited.contains() → haven't been here before
-                if maze[nr][nc] != '#' && !visited.contains(&(nr, nc)) {
-                    // Mark as visited NOW (before adding to queue)
-                    // This prevents adding the same cell multiple times
-                    visited.insert((nr, nc));
-                    // Add to BACK of queue with distance + 1
-                    // This cell is one step further from start than current cell
-                    queue.push_back((nr, nc, dist + 1));
-                }
+            if new_row < 0 || new_row >= rows as i32 || new_col < 0 || new_col >= cols as i32 {
+                continue;
+            }
+            // Convert back to usize for array indexing
+            let nr = new_row as usize;
+            let nc = new_col as usize;
+            // VALIDITY CHECK: Can we actually move to this cell?
+            // 1. maze[nr][nc] != '#' → not a wall (assume '#' = wall, '.' = open)
+            // 2. !visited.contains() → haven't been here before
+            if maze[nr][nc] != '#' && !visited.contains(&(nr, nc)) {
+                // Mark as visited NOW (before adding to queue)
+                // This prevents adding the same cell multiple times
+                visited.insert((nr, nc));
+                // Add to BACK of queue with distance + 1
+                // This cell is one step further from start than current cell
+                queue.push_back((nr, nc, dist + 1));
             }
         }
     }
