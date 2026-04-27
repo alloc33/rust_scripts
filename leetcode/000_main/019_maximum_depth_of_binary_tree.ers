@@ -1,0 +1,89 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! ```
+
+// Recursive DFS
+// ---
+// Given the root of a binary tree, return its maximum depth.
+// Maximum depth is the number of nodes along the longest path from root to the farthest leaf.
+
+use std::cell::RefCell;
+use std::rc::Rc;
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct TreeNode {
+    pub val: i32,
+    pub left: Option<Rc<RefCell<TreeNode>>>,
+    pub right: Option<Rc<RefCell<TreeNode>>>,
+}
+
+impl TreeNode {
+    pub fn new(val: i32) -> Self {
+        TreeNode { val, left: None, right: None }
+    }
+}
+
+/// Helper: build a tree from level-order array where None = absent node
+fn from_level_order(vals: &[Option<i32>]) -> Option<Rc<RefCell<TreeNode>>> {
+    if vals.is_empty() || vals[0].is_none() {
+        return None;
+    }
+    let root = Rc::new(RefCell::new(TreeNode::new(vals[0].unwrap())));
+    let mut queue = std::collections::VecDeque::new();
+    queue.push_back(root.clone());
+    let mut i = 1;
+    while i < vals.len() {
+        let parent = queue.pop_front().unwrap();
+        if i < vals.len() {
+            if let Some(v) = vals[i] {
+                let left = Rc::new(RefCell::new(TreeNode::new(v)));
+                parent.borrow_mut().left = Some(left.clone());
+                queue.push_back(left);
+            }
+            i += 1;
+        }
+        if i < vals.len() {
+            if let Some(v) = vals[i] {
+                let right = Rc::new(RefCell::new(TreeNode::new(v)));
+                parent.borrow_mut().right = Some(right.clone());
+                queue.push_back(right);
+            }
+            i += 1;
+        }
+    }
+    Some(root)
+}
+
+pub fn max_depth(root: Option<Rc<RefCell<TreeNode>>>) -> i32 {
+    match root {
+        // base case: empty subtree contributes 0 depth
+        None => 0,
+        Some(node) => {
+            let node = node.borrow();
+            // recurse into both subtrees to find their depths
+            let left = max_depth(node.left.clone());
+            let right = max_depth(node.right.clone());
+            // current node adds 1 level; take the deeper subtree
+            1 + left.max(right)
+        },
+    }
+}
+
+fn main() {
+    // [3,9,20,null,null,15,7] → depth 3
+    assert_eq!(
+        max_depth(from_level_order(&[Some(3), Some(9), Some(20), None, None, Some(15), Some(7)])),
+        3
+    );
+    // [1,null,2] → depth 2
+    assert_eq!(max_depth(from_level_order(&[Some(1), None, Some(2)])), 2);
+    // single node → depth 1
+    assert_eq!(max_depth(from_level_order(&[Some(1)])), 1);
+    // empty tree → depth 0
+    assert_eq!(max_depth(from_level_order(&[])), 0);
+    // left-skewed: 1→2→3 → depth 3
+    assert_eq!(max_depth(from_level_order(&[Some(1), Some(2), None, Some(3)])), 3);
+
+    println!("All tests passed!");
+}

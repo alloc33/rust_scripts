@@ -1,0 +1,56 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! ```
+
+// Iterative pointer reversal
+// ---
+// Given the head of a singly linked list, reverse the list and return the new head.
+
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub struct ListNode {
+    pub val: i32,
+    pub next: Option<Box<ListNode>>,
+}
+
+impl ListNode {
+    fn new(val: i32) -> Self {
+        ListNode { next: None, val }
+    }
+}
+
+/// Helper: build a linked list from a slice (left = head)
+fn from_vec(vals: &[i32]) -> Option<Box<ListNode>> {
+    let mut head = None;
+    // build in reverse so first element ends up as head
+    for &v in vals.iter().rev() {
+        let mut node = ListNode::new(v);
+        node.next = head;
+        head = Some(Box::new(node));
+    }
+    head
+}
+
+/// Helper: collect linked list values into a Vec for easy assertion
+fn to_vec(mut head: Option<Box<ListNode>>) -> Vec<i32> {
+    let mut out = Vec::new();
+    while let Some(node) = head {
+        out.push(node.val);
+        head = node.next;
+    }
+    out
+}
+
+pub fn reverse_list(head: Option<Box<ListNode>>) -> Option<Box<ListNode>> {
+    todo!()
+}
+
+fn main() {
+    assert_eq!(to_vec(reverse_list(from_vec(&[1, 2, 3, 4, 5]))), vec![5, 4, 3, 2, 1]);
+    assert_eq!(to_vec(reverse_list(from_vec(&[1, 2]))), vec![2, 1]);
+    assert_eq!(to_vec(reverse_list(from_vec(&[1]))), vec![1]);
+    assert_eq!(to_vec(reverse_list(from_vec(&[]))), vec![]);
+    assert_eq!(to_vec(reverse_list(from_vec(&[3, 7, 1, 9]))), vec![9, 1, 7, 3]);
+
+    println!("All tests passed!");
+}
