@@ -21,12 +21,12 @@ pub fn num_islands(grid: Vec<Vec<char>>) -> i32 {
     // each time we find unvisited land, it's a new island
     let mut count = 0;
 
-    for row in 0..m {
-        for col in 0..n {
-            if grid[row][col] == '1' {
+    for i in 0..m {
+        for j in 0..n {
+            if grid[i][j] == '1' {
                 // found new island — increment and sink the entire island via DFS
                 count += 1;
-                dfs(&mut grid, row, col);
+                dfs(&mut grid, i, j);
             }
         }
     }
