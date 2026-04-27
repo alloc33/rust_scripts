@@ -13,29 +13,6 @@ pub fn num_islands(grid: Vec<Vec<char>>) -> i32 {
     todo!()
 }
 
-fn dfs(grid: &mut Vec<Vec<char>>, row: usize, col: usize) {
-    let rows = grid.len();
-    let cols = grid[0].len();
-
-    // out of bounds or water — stop recursion
-    if row >= rows || col >= cols || grid[row][col] == '0' {
-        return;
-    }
-
-    // mark as visited by sinking land to water — avoids a separate visited set
-    grid[row][col] = '0';
-
-    // explore all 4 directions to sink the entire connected island
-    if row > 0 {
-        dfs(grid, row - 1, col); // up
-    }
-    dfs(grid, row + 1, col); // down
-    if col > 0 {
-        dfs(grid, row, col - 1); // left
-    }
-    dfs(grid, row, col + 1); // right
-}
-
 fn main() {
     assert_eq!(
         num_islands(vec![
