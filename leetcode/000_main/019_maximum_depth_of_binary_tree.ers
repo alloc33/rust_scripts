@@ -24,6 +24,21 @@ impl TreeNode {
     }
 }
 
+pub fn max_depth(root: Option<Rc<RefCell<TreeNode>>>) -> i32 {
+    match root {
+        // base case: empty subtree contributes 0 depth
+        None => 0,
+        Some(node) => {
+            let node = node.borrow();
+            // recurse into both subtrees to find their depths
+            let left = max_depth(node.left.clone());
+            let right = max_depth(node.right.clone());
+            // current node adds 1 level; take the deeper subtree
+            1 + left.max(right)
+        },
+    }
+}
+
 /// Helper: build a tree from level-order array where None = absent node
 fn from_level_order(vals: &[Option<i32>]) -> Option<Rc<RefCell<TreeNode>>> {
     if vals.is_empty() || vals[0].is_none() {
@@ -53,21 +68,6 @@ fn from_level_order(vals: &[Option<i32>]) -> Option<Rc<RefCell<TreeNode>>> {
         }
     }
     Some(root)
-}
-
-pub fn max_depth(root: Option<Rc<RefCell<TreeNode>>>) -> i32 {
-    match root {
-        // base case: empty subtree contributes 0 depth
-        None => 0,
-        Some(node) => {
-            let node = node.borrow();
-            // recurse into both subtrees to find their depths
-            let left = max_depth(node.left.clone());
-            let right = max_depth(node.right.clone());
-            // current node adds 1 level; take the deeper subtree
-            1 + left.max(right)
-        },
-    }
 }
 
 fn main() {

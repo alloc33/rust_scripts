@@ -26,16 +26,7 @@ impl TreeNode {
 }
 
 pub fn invert_tree(root: Option<Rc<RefCell<TreeNode>>>) -> Option<Rc<RefCell<TreeNode>>> {
-    if let Some(node) = root.clone() {
-        let mut node = node.borrow_mut();
-        // invert both subtrees first (post-order doesn't matter — any order works)
-        let left = invert_tree(node.left.clone());
-        let right = invert_tree(node.right.clone());
-        // swap children to mirror this level
-        node.left = right;
-        node.right = left;
-    }
-    root
+    todo!()
 }
 
 fn from_level_order(vals: &[Option<i32>]) -> Option<Rc<RefCell<TreeNode>>> {

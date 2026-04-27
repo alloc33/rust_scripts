@@ -24,6 +24,10 @@ impl TreeNode {
     }
 }
 
+pub fn max_depth(root: Option<Rc<RefCell<TreeNode>>>) -> i32 {
+    todo!()
+}
+
 /// Helper: build a tree from level-order array where None = absent node
 fn from_level_order(vals: &[Option<i32>]) -> Option<Rc<RefCell<TreeNode>>> {
     if vals.is_empty() || vals[0].is_none() {
@@ -53,10 +57,6 @@ fn from_level_order(vals: &[Option<i32>]) -> Option<Rc<RefCell<TreeNode>>> {
         }
     }
     Some(root)
-}
-
-pub fn max_depth(root: Option<Rc<RefCell<TreeNode>>>) -> i32 {
-    todo!()
 }
 
 fn main() {
