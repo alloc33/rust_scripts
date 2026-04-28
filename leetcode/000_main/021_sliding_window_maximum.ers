@@ -15,29 +15,38 @@ use std::collections::VecDeque;
 
 pub fn max_sliding_window(nums: Vec<i32>, k: i32) -> Vec<i32> {
     let k = k as usize;
+    // Pre-allocate result: for array of length n with window k, there are n-k+1 results
     let mut result = Vec::with_capacity(nums.len().saturating_sub(k - 1));
-    let mut deque: VecDeque<usize> = VecDeque::new();
+    // MONOTONIC DEQUE: stores *indices* (not values) in decreasing order of their values
+    // Front of deque = index of the current window's maximum
+    // Why indices? We need to know when an element leaves the window
+    let mut queue: VecDeque<usize> = VecDeque::new();
 
     for (i, &num) in nums.iter().enumerate() {
-        // Remove indices with smaller values - they're dominated
-        while let Some(&j) = deque.back() &&
-            nums[j] <= num
+        // MAINTAIN DECREASING ORDER: remove all indices from the back
+        // whose values are <= current num. They can never be a window max
+        // because num is both larger AND newer (will stay in the window longer)
+        while let Some(&j) = queue.back()
+            && nums[j] <= num
         {
-            deque.pop_back();
+            queue.pop_back();
         }
 
-        // Remove indices outside window
-        while let Some(&j) = deque.front() &&
-            j + k <= i
+        // REMOVE EXPIRED: if the front index is outside the current window
+        // (i.e., it's more than k positions behind), remove it
+        while let Some(&j) = queue.front()
+            && j + k <= i
         {
-            deque.pop_front();
+            queue.pop_front();
         }
 
-        deque.push_back(i);
+        // Add current index to the back of the deque
+        queue.push_back(i);
 
-        // Start recording once first window is complete
+        // OUTPUT: once we've seen at least k elements (first full window),
+        // the front of the deque is always the index of the window's maximum
         if i >= k - 1 {
-            result.push(nums[deque[0]]);
+            result.push(nums[queue[0]]);
         }
     }
 
