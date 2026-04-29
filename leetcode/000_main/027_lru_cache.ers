@@ -48,13 +48,7 @@ impl LRUCache {
             Node { key: 0, value: 0, prev: 0, next: 1 }, // head sentinel (index 0)
             Node { key: 0, value: 0, prev: 0, next: 1 }, // tail sentinel (index 1)
         ];
-        LRUCache {
-            capacity,
-            map: HashMap::with_capacity(capacity),
-            nodes,
-            head: 0,
-            tail: 1,
-        }
+        LRUCache { capacity, map: HashMap::with_capacity(capacity), nodes, head: 0, tail: 1 }
     }
 
     // Unlink a node from its current position in the list
@@ -116,19 +110,19 @@ fn main() {
     let mut cache = LRUCache::new(2);
     cache.put(1, 1);
     cache.put(2, 2);
-    assert_eq!(cache.get(1), 1);     // returns 1
-    cache.put(3, 3);                  // evicts key 2
-    assert_eq!(cache.get(2), -1);    // not found
-    cache.put(4, 4);                  // evicts key 1
-    assert_eq!(cache.get(1), -1);    // not found
-    assert_eq!(cache.get(3), 3);     // returns 3
-    assert_eq!(cache.get(4), 4);     // returns 4
+    assert_eq!(cache.get(1), 1); // returns 1
+    cache.put(3, 3); // evicts key 2
+    assert_eq!(cache.get(2), -1); // not found
+    cache.put(4, 4); // evicts key 1
+    assert_eq!(cache.get(1), -1); // not found
+    assert_eq!(cache.get(3), 3); // returns 3
+    assert_eq!(cache.get(4), 4); // returns 4
 
     // Capacity 1
     let mut cache = LRUCache::new(1);
     cache.put(1, 10);
     assert_eq!(cache.get(1), 10);
-    cache.put(2, 20);                 // evicts key 1
+    cache.put(2, 20); // evicts key 1
     assert_eq!(cache.get(1), -1);
     assert_eq!(cache.get(2), 20);
 
@@ -136,8 +130,8 @@ fn main() {
     let mut cache = LRUCache::new(2);
     cache.put(1, 1);
     cache.put(2, 2);
-    cache.put(1, 10);                 // update key 1, makes it MRU
-    cache.put(3, 3);                  // evicts key 2 (LRU), not key 1
+    cache.put(1, 10); // update key 1, makes it MRU
+    cache.put(3, 3); // evicts key 2 (LRU), not key 1
     assert_eq!(cache.get(1), 10);
     assert_eq!(cache.get(2), -1);
     assert_eq!(cache.get(3), 3);
