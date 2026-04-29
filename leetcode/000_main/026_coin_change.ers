@@ -18,23 +18,30 @@
 
 pub fn coin_change(coins: Vec<i32>, amount: i32) -> i32 {
     let amount = amount as usize;
-    // dp[i] = fewest coins needed to make amount i
-    // Initialize with amount + 1 as "impossible" sentinel (no valid answer can exceed amount)
+
+    // dp is an array where dp[i] = "minimum coins to make amount i"
+    // Example: coins=[1,2,5], amount=11
+    //   dp[0]=0, dp[1]=1, dp[2]=1, dp[3]=2, dp[4]=2, dp[5]=1, ... dp[11]=3
+    //
+    // We fill every slot with a huge number (amount+1) meaning "not yet solved".
+    // The only exception is dp[0] = 0 because you need 0 coins to make $0.
     let mut dp = vec![amount + 1; amount + 1];
-    // Base case: 0 coins needed to make amount 0
     dp[0] = 0;
 
+    // For each amount from $1 to $amount...
     for i in 1..=amount {
+        // ...try every coin and see which one gives the fewest total coins.
+        // Example: i=11, coin=5 → dp[11] = min(dp[11], dp[6] + 1)
+        //   "If I use a $5 coin, I need 1 + however many coins it takes to make $6"
         for &coin in &coins {
             let coin = coin as usize;
-            // If this coin fits, check if using it gives fewer coins
             if coin <= i {
                 dp[i] = dp[i].min(dp[i - coin] + 1);
             }
         }
     }
 
-    // If dp[amount] was never updated from sentinel, it's impossible
+    // If dp[amount] is still the huge number, no combination of coins works → return -1
     if dp[amount] > amount {
         -1
     } else {
