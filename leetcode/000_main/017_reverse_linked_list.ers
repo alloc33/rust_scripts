@@ -19,6 +19,26 @@ impl ListNode {
     }
 }
 
+pub fn reverse_list(head: Option<Box<ListNode>>) -> Option<Box<ListNode>> {
+    // prev accumulates the reversed list as we go
+    let mut prev = None;
+    let mut current = head;
+
+    while let Some(mut node) = current {
+        // save next before we overwrite the pointer
+        let next = node.next.take();
+        // flip this node's pointer to the already-reversed portion
+        node.next = prev;
+        // this node is now the new head of the reversed portion
+        prev = Some(node);
+        // advance to the remaining unreversed list
+        current = next;
+    }
+
+    // prev is the new head after full reversal
+    prev
+}
+
 /// Helper: build a linked list from a slice (left = head)
 fn from_vec(vals: &[i32]) -> Option<Box<ListNode>> {
     let mut head = None;
@@ -39,26 +59,6 @@ fn to_vec(mut head: Option<Box<ListNode>>) -> Vec<i32> {
         head = node.next;
     }
     out
-}
-
-pub fn reverse_list(head: Option<Box<ListNode>>) -> Option<Box<ListNode>> {
-    // prev accumulates the reversed list as we go
-    let mut prev = None;
-    let mut current = head;
-
-    while let Some(mut node) = current {
-        // save next before we overwrite the pointer
-        let next = node.next.take();
-        // flip this node's pointer to the already-reversed portion
-        node.next = prev;
-        // this node is now the new head of the reversed portion
-        prev = Some(node);
-        // advance to the remaining unreversed list
-        current = next;
-    }
-
-    // prev is the new head after full reversal
-    prev
 }
 
 fn main() {
