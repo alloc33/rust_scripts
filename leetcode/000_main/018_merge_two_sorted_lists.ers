@@ -20,25 +20,6 @@ impl ListNode {
     }
 }
 
-fn from_vec(vals: &[i32]) -> Option<Box<ListNode>> {
-    let mut head = None;
-    for &v in vals.iter().rev() {
-        let mut node = ListNode::new(v);
-        node.next = head;
-        head = Some(Box::new(node));
-    }
-    head
-}
-
-fn to_vec(mut head: Option<Box<ListNode>>) -> Vec<i32> {
-    let mut out = Vec::new();
-    while let Some(node) = head {
-        out.push(node.val);
-        head = node.next;
-    }
-    out
-}
-
 pub fn merge_two_lists(
     list1: Option<Box<ListNode>>,
     list2: Option<Box<ListNode>>,
@@ -61,6 +42,25 @@ pub fn merge_two_lists(
             }
         },
     }
+}
+
+fn from_vec(vals: &[i32]) -> Option<Box<ListNode>> {
+    let mut head = None;
+    for &v in vals.iter().rev() {
+        let mut node = ListNode::new(v);
+        node.next = head;
+        head = Some(Box::new(node));
+    }
+    head
+}
+
+fn to_vec(mut head: Option<Box<ListNode>>) -> Vec<i32> {
+    let mut out = Vec::new();
+    while let Some(node) = head {
+        out.push(node.val);
+        head = node.next;
+    }
+    out
 }
 
 fn main() {
