@@ -1,0 +1,88 @@
+#!/usr/bin/env rust-script
+//! ```cargo
+//! [dependencies]
+//! ```
+
+// Floyd's Tortoise and Hare
+// ---
+// Given head, the head of a linked list, determine if the linked list has a cycle in it.
+// There is a cycle in a linked list if there is some node in the list that can be reached
+// again by continuously following the next pointer.
+// Return true if there is a cycle in the linked list. Otherwise, return false.
+
+// Constraints:
+//     The number of the nodes in the list is in the range [0, 10^4].
+//     -10^5 <= Node.val <= 10^5
+
+use std::cell::RefCell;
+use std::rc::Rc;
+
+struct ListNode {
+    val: i32,
+    next: Option<Rc<RefCell<ListNode>>>,
+}
+
+// Floyd's cycle detection: two pointers, slow moves 1 step, fast moves 2 steps.
+// If there's a cycle, they will eventually meet. If not, fast hits None.
+fn has_cycle(head: Option<Rc<RefCell<ListNode>>>) -> bool {
+    let mut slow = head.clone();
+    let mut fast = head.clone();
+
+    loop {
+        // Move slow by 1 step
+        slow = slow.and_then(|n| n.borrow().next.clone());
+
+        // Move fast by 2 steps
+        fast = fast.and_then(|n| n.borrow().next.clone());
+        fast = fast.and_then(|n| n.borrow().next.clone());
+
+        // If fast reached the end → no cycle
+        if fast.is_none() {
+            return false;
+        }
+
+        // If slow and fast point to the same node → cycle found
+        if let (Some(s), Some(f)) = (&slow, &fast) {
+            if Rc::ptr_eq(s, f) {
+                return true;
+            }
+        }
+    }
+}
+
+fn main() {
+    // Test 1: cycle exists (3 → 2 → 0 → -4 → back to 2)
+    let node3 = Rc::new(RefCell::new(ListNode { val: 3, next: None }));
+    let node2 = Rc::new(RefCell::new(ListNode { val: 2, next: None }));
+    let node0 = Rc::new(RefCell::new(ListNode { val: 0, next: None }));
+    let node4 = Rc::new(RefCell::new(ListNode { val: -4, next: None }));
+    node3.borrow_mut().next = Some(node2.clone());
+    node2.borrow_mut().next = Some(node0.clone());
+    node0.borrow_mut().next = Some(node4.clone());
+    node4.borrow_mut().next = Some(node2.clone()); // cycle back to node2
+    assert_eq!(has_cycle(Some(node3)), true);
+
+    // Test 2: cycle exists (1 → 2 → back to 1)
+    let node1 = Rc::new(RefCell::new(ListNode { val: 1, next: None }));
+    let node2 = Rc::new(RefCell::new(ListNode { val: 2, next: None }));
+    node1.borrow_mut().next = Some(node2.clone());
+    node2.borrow_mut().next = Some(node1.clone()); // cycle back to node1
+    assert_eq!(has_cycle(Some(node1)), true);
+
+    // Test 3: no cycle (1 → 2 → 3)
+    let node1 = Rc::new(RefCell::new(ListNode { val: 1, next: None }));
+    let node2 = Rc::new(RefCell::new(ListNode { val: 2, next: None }));
+    let node3 = Rc::new(RefCell::new(ListNode { val: 3, next: None }));
+    node1.borrow_mut().next = Some(node2.clone());
+    node2.borrow_mut().next = Some(node3.clone());
+    assert_eq!(has_cycle(Some(node1)), false);
+
+    // Test 4: single node, no cycle
+    let node1 = Rc::new(RefCell::new(ListNode { val: 1, next: None }));
+    assert_eq!(has_cycle(Some(node1)), false);
+
+    // Test 5: empty list
+    assert_eq!(has_cycle(None), false);
+
+    println!("All tests passed!");
+}
