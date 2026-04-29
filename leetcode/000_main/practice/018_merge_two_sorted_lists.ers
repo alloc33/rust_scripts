@@ -20,6 +20,13 @@ impl ListNode {
     }
 }
 
+pub fn merge_two_lists(
+    list1: Option<Box<ListNode>>,
+    list2: Option<Box<ListNode>>,
+) -> Option<Box<ListNode>> {
+    todo!()
+}
+
 fn from_vec(vals: &[i32]) -> Option<Box<ListNode>> {
     let mut head = None;
     for &v in vals.iter().rev() {
@@ -37,13 +44,6 @@ fn to_vec(mut head: Option<Box<ListNode>>) -> Vec<i32> {
         head = node.next;
     }
     out
-}
-
-pub fn merge_two_lists(
-    list1: Option<Box<ListNode>>,
-    list2: Option<Box<ListNode>>,
-) -> Option<Box<ListNode>> {
-    todo!()
 }
 
 fn main() {
